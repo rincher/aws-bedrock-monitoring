@@ -37,3 +37,14 @@ credentials
 # Grafana local state
 grafana-storage/
 prometheus-storage/
+
+# Documents
+*.md
+*.pdf
+*.ppt
+*.pptx
+*.doc
+*.docx
+*.xls
+*.xlsx
+!.env.example
