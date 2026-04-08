@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #0f111a; color: #e2e8f0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+#header { padding: 10px 16px; background: #161b2e; border-bottom: 1px solid #2d3748; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+#header .title { font-size: 14px; font-weight: 700; }
+#header .badge { font-size: 10px; font-weight: 600; color: #90cdf4; background: rgba(66,153,225,0.15); border: 1px solid rgba(66,153,225,0.3); padding: 2px 8px; border-radius: 10px; }
+#header .dot { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #718096; margin-left: auto; }
+#header .dot span { width: 6px; height: 6px; background: #48bb78; border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+#main { display: flex; flex: 1; overflow: hidden; }
+#sidebar { width: 240px; flex-shrink: 0; background: #111827; border-right: 1px solid #2d3748; display: flex; flex-direction: column; overflow: hidden; }
+#sidebar-header { padding: 10px 12px; border-bottom: 1px solid #2d3748; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+#sidebar-header span { font-size: 11px; font-weight: 600; color: #718096; text-transform: uppercase; letter-spacing: .05em; }
+#new-chat-btn { padding: 4px 10px; border-radius: 6px; border: 1px solid #2d3748; background: transparent; color: #90cdf4; font-size: 11px; cursor: pointer; }
+#new-chat-btn:hover { background: #1a202c; }
+#session-list { flex: 1; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+#session-list::-webkit-scrollbar { width: 3px; }
+#session-list::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 2px; }
+.session-item { padding: 8px 10px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
+.session-item:hover { background: #1a202c; }
+.session-item.active { background: #1e3a5f; border-color: rgba(66,153,225,0.3); }
+.session-item .s-question { font-size: 12px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.session-item .s-meta { font-size: 10px; color: #4a5568; margin-top: 2px; display: flex; justify-content: space-between; align-items: center; }
+.compact-btn, .delete-btn { font-size: 10px; padding: 1px 6px; border-radius: 4px; border: 1px solid #2d3748; background: transparent; cursor: pointer; flex-shrink: 0; }
+.compact-btn { color: #718096; }
+.compact-btn:hover { background: #2d3748; color: #e2e8f0; }
+.delete-btn { color: #718096; }
+.delete-btn:hover { background: #742a2a; border-color: #c53030; color: #feb2b2; }
+.compact-btn:disabled, .delete-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+#chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#chat { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+#chat::-webkit-scrollbar { width: 4px; }
+#chat::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 2px; }
+.msg { display: flex; gap: 8px; max-width: 90%; animation: fadeIn .2s ease-out; }
+.msg.user { align-self: flex-end; flex-direction: row-reverse; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+.avatar { width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+.msg.ai .avatar { background: linear-gradient(135deg,#4299e1,#667eea); color: white; }
+.msg.user .avatar { background: rgba(66,153,225,0.2); color: #4299e1; }
+.bubble { padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.msg.ai .bubble { background: #1a202c; border: 1px solid #2d3748; color: #e2e8f0; border-top-left-radius: 3px; }
+.msg.user .bubble { background: linear-gradient(135deg,#2b4c8a,#3182ce); border: 1px solid rgba(66,153,225,0.3); color: white; border-top-right-radius: 3px; }
+.thinking-block { margin-bottom: 8px; border-radius: 8px; background: #0d1117; border: 1px solid #2d3748; overflow: hidden; }
+.thinking-toggle { display: flex; align-items: center; gap: 6px; padding: 6px 10px; cursor: pointer; user-select: none; font-size: 11px; color: #718096; }
+.thinking-toggle:hover { color: #a0aec0; }
+.thinking-toggle .t-icon { font-size: 9px; transition: transform .2s; }
+.thinking-toggle.open .t-icon { transform: rotate(90deg); }
+.thinking-body { padding: 8px 12px 10px; font-size: 12px; color: #718096; white-space: pre-wrap; word-break: break-word; line-height: 1.6; border-top: 1px solid #2d3748; display: none; }
+.thinking-body.open { display: block; }
+.meta { font-size: 11px; color: #4a5568; margin-top: 3px; padding: 0 4px; }
+.msg.user .meta { text-align: right; }
+.typing { display: flex; gap: 4px; padding: 12px 14px; }
+.typing span { width: 6px; height: 6px; background: #4299e1; border-radius: 50%; animation: bounce 1.4s infinite; }
+.typing span:nth-child(2) { animation-delay: .2s; }
+.typing span:nth-child(3) { animation-delay: .4s; }
+@keyframes bounce { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-5px);opacity:1} }
+#input-area { flex-shrink: 0; padding: 10px 14px; border-top: 1px solid #2d3748; }
+#input-wrap { display: flex; align-items: center; gap: 8px; background: #1a202c; border: 1px solid #2d3748; border-radius: 10px; padding: 4px 4px 4px 12px; transition: border-color .2s; }
+#input-wrap:focus-within { border-color: #4299e1; box-shadow: 0 0 0 2px rgba(66,153,225,0.1); }
+#q { flex: 1; background: transparent; border: none; outline: none; color: #e2e8f0; font-size: 13px; font-family: inherit; padding: 7px 0; resize: none; max-height: 100px; overflow-y: auto; }
+#q::placeholder { color: #4a5568; }
+#btn { width: 32px; height: 32px; background: linear-gradient(135deg,#2b6cb0,#3182ce); border: none; border-radius: 7px; color: white; font-size: 14px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+#btn:hover { background: linear-gradient(135deg,#3182ce,#63b3ed); transform: scale(1.05); }
+#btn:disabled { background: #2d3748; cursor: not-allowed; transform: none; }
+</style>
+</head>
+<body>
+<div id="header">
+  <div class="title">&#9729; AWS Bedrock AI</div>
+  <div class="badge">LIVE ACCOUNT</div>
+  <div class="dot"><span></span> Connected</div>
+</div>
+<div id="main">
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <span>Sessions</span>
+      <button id="new-chat-btn" onclick="newChat()">+ New</button>
+    </div>
+    <div id="session-list"><div style="padding:12px;font-size:11px;color:#4a5568">Loading...</div></div>
+  </div>
+  <div id="chat-area">
+    <div id="chat"></div>
+    <div id="input-area">
+      <div id="input-wrap">
+        <textarea id="q" rows="1" placeholder="Ask anything about your AWS account..."></textarea>
+        <button id="btn" onclick="send()">&#9654;</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var API = 'API_URL_PLACEHOLDER';
+var sessionId = '';
+
+function escHtml(t) {
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function parseThinkingResponse(text) {
+  var tMatch = text.match(/<thinking>([\s\S]*?)<\/thinking>/i);
+  var rMatch = text.match(/<response>([\s\S]*?)<\/response>/i);
+  if (!tMatch && !rMatch) return { thinking: null, response: text };
+  return {
+    thinking: tMatch ? tMatch[1].trim() : null,
+    response: rMatch ? rMatch[1].trim() : text.replace(/<thinking>[\s\S]*?<\/thinking>/i, '').trim()
+  };
+}
+
+function addMsg(text, isUser, animate) {
+  var chat = document.getElementById('chat');
+  var wrap = document.createElement('div');
+  wrap.className = 'msg ' + (isUser ? 'user' : 'ai');
+  if (animate === false) wrap.style.animation = 'none';
+  var av = document.createElement('div');
+  av.className = 'avatar';
+  av.textContent = isUser ? 'U' : 'AI';
+  var inner = document.createElement('div');
+
+  if (!isUser) {
+    var parsed = parseThinkingResponse(text);
+    if (parsed.thinking) {
+      var tb = document.createElement('div');
+      tb.className = 'thinking-block';
+      var tg = document.createElement('div');
+      tg.className = 'thinking-toggle';
+      tg.innerHTML = '<span class="t-icon">&#9658;</span><span>Thinking</span>';
+      var td = document.createElement('div');
+      td.className = 'thinking-body';
+      td.textContent = parsed.thinking;
+      tg.onclick = function() {
+        tg.classList.toggle('open');
+        td.classList.toggle('open');
+      };
+      tb.appendChild(tg);
+      tb.appendChild(td);
+      inner.appendChild(tb);
+    }
+    var bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = parsed.response;
+    inner.appendChild(bubble);
+    wrap.appendChild(av);
+    wrap.appendChild(inner);
+    chat.appendChild(wrap);
+    chat.scrollTop = chat.scrollHeight;
+    return bubble;
+  }
+
+  var bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.textContent = text;
+  inner.appendChild(bubble);
+  wrap.appendChild(av);
+  wrap.appendChild(inner);
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+  return bubble;
+}
+
+function addTyping() {
+  var chat = document.getElementById('chat');
+  var wrap = document.createElement('div');
+  wrap.className = 'msg ai';
+  wrap.id = 'typing-indicator';
+  var av = document.createElement('div');
+  av.className = 'avatar';
+  av.textContent = 'AI';
+  var inner = document.createElement('div');
+  var bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+  inner.appendChild(bubble);
+  wrap.appendChild(av);
+  wrap.appendChild(inner);
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+  return wrap;
+}
+
+function setActiveSession(id) {
+  sessionId = id;
+  document.querySelectorAll('.session-item').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.id === id);
+  });
+}
+
+function loadSession(id) {
+  setActiveSession(id);
+  document.getElementById('chat').innerHTML = '';
+  var loading = addMsg('Loading conversation...', false, false);
+  fetch(API.replace('/ask', '/session/' + id))
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      document.getElementById('chat').innerHTML = '';
+      (d.turns || []).forEach(function(t) {
+        addMsg(t.text, t.role === 'user', false);
+      });
+      document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+    })
+    .catch(function() { loading.textContent = 'Failed to load session.'; });
+}
+
+function newChat() {
+  sessionId = '';
+  setActiveSession('');
+  document.getElementById('chat').innerHTML = '';
+  addMsg('New conversation started. Ask me anything about your AWS account.', false, true);
+  document.getElementById('q').focus();
+}
+
+function loadSessions() {
+  fetch(API.replace('/ask', '/history'))
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      var list = document.getElementById('session-list');
+      list.innerHTML = '';
+      if (!rows.length) {
+        list.innerHTML = '<div style="padding:12px;font-size:11px;color:#4a5568">No sessions yet</div>';
+        return;
+      }
+      rows.forEach(function(s) {
+        var el = document.createElement('div');
+        el.className = 'session-item' + (s.session_id === sessionId ? ' active' : '');
+        el.dataset.id = s.session_id;
+        var ts = s.last_active ? new Date(s.last_active).toLocaleString() : '';
+        var q = document.createElement('div');
+        q.className = 's-question';
+        q.textContent = s.first_question;
+        var m = document.createElement('div');
+        m.className = 's-meta';
+        var sid = s.session_id;
+        m.innerHTML = '<span>' + Math.floor(s.messages / 2) + ' turns</span><span>' + escHtml(ts) + '</span>';
+        var cb = document.createElement('button');
+        cb.className = 'compact-btn';
+        cb.textContent = 'Compact';
+        cb.title = 'Summarise and compress this session\'s history';
+        cb.onclick = function(e) { e.stopPropagation(); compactSession(sid, cb); };
+        m.appendChild(cb);
+        var db = document.createElement('button');
+        db.className = 'delete-btn';
+        db.textContent = 'Del';
+        db.title = 'Delete this session';
+        db.onclick = function(e) { e.stopPropagation(); deleteSession(sid, el); };
+        m.appendChild(db);
+        el.appendChild(q);
+        el.appendChild(m);
+        el.onclick = function() { loadSession(sid); };
+        list.appendChild(el);
+      });
+    })
+    .catch(function() {});
+}
+
+function deleteSession(sid, el) {
+  if (!confirm('Delete this session? This cannot be undone.')) return;
+  el.style.opacity = '0.4';
+  fetch(API.replace('/ask', '/session/' + sid), { method: 'DELETE' })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) { alert('Delete failed: ' + d.error); el.style.opacity = '1'; return; }
+      if (sid === sessionId) {
+        sessionId = '';
+        document.getElementById('chat').innerHTML = '';
+        addMsg('Session deleted. Start a new conversation or select one from the list.', false, false);
+      }
+      el.remove();
+    })
+    .catch(function(e) { alert('Error: ' + e.message); el.style.opacity = '1'; });
+}
+
+function compactSession(sid, btn) {
+  btn.disabled = true;
+  btn.textContent = '...';
+  fetch(API.replace('/ask', '/compact/' + sid), { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) { alert('Compact failed: ' + d.error); return; }
+      btn.textContent = 'Done';
+      // If this is the active session, reload it
+      if (sid === sessionId) loadSession(sid);
+      setTimeout(function() { loadSessions(); }, 500);
+    })
+    .catch(function(e) { alert('Error: ' + e.message); })
+    .finally(function() {
+      setTimeout(function() { btn.disabled = false; btn.textContent = 'Compact'; }, 2000);
+    });
+}
+
+function send() {
+  var qEl = document.getElementById('q');
+  var q = qEl.value.trim();
+  if (!q) return;
+  var btn = document.getElementById('btn');
+  qEl.value = '';
+  qEl.style.height = 'auto';
+  btn.disabled = true;
+  addMsg(q, true, true);
+  var typing = addTyping();
+  var t0 = Date.now();
+  fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question: q, session_id: sessionId })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.session_id) {
+      var isNew = !sessionId;
+      sessionId = d.session_id;
+      if (isNew) loadSessions();
+      else setActiveSession(sessionId);
+    }
+    typing.remove();
+    var bubble = addMsg(d.answer || d.error || JSON.stringify(d), false, true);
+    var sec = ((Date.now() - t0) / 1000).toFixed(1);
+    var meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = sec + 's';
+    bubble.parentNode.appendChild(meta);
+  })
+  .catch(function(e) {
+    typing.remove();
+    addMsg('Error: ' + e.message, false, true);
+  })
+  .finally(function() { btn.disabled = false; });
+}
+
+document.getElementById('q').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+});
+document.getElementById('q').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+
+loadSessions();
+setInterval(loadSessions, 30000);
+
+var autoQ = new URLSearchParams(window.location.search).get('q');
+if (autoQ) {
+  // Opened from a Grafana data link — show question and auto-send
+  addMsg(autoQ, true, false);
+  var typing = addTyping();
+  var t0 = Date.now();
+  fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question: autoQ })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.session_id) { sessionId = d.session_id; loadSessions(); }
+    typing.remove();
+    var bubble = addMsg(d.answer || d.error || JSON.stringify(d), false, true);
+    var meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = ((Date.now() - t0) / 1000).toFixed(1) + 's';
+    bubble.parentNode.appendChild(meta);
+  })
+  .catch(function(e) { typing.remove(); addMsg('Error: ' + e.message, false, true); });
+} else {
+  addMsg('Hello! Select a session on the left to resume, or type to start a new one.', false, false);
+}
+</script>
+</body>
+</html>

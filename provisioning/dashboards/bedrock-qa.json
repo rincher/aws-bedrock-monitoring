@@ -1,0 +1,30 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "gridPos": { "h": 40, "w": 24, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false },
+        "mode": "html",
+        "content": "<iframe src=\"https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com/prod/ui\" style=\"width:100%;height:750px;border:none;display:block;\"></iframe>"
+      },
+      "title": "",
+      "type": "text"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": ["bedrock", "ai"],
+  "templating": { "list": [] },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": { "hidden": true },
+  "timezone": "browser",
+  "title": "Bedrock Q&A",
+  "uid": "bedrock-qa",
+  "version": 3
+}

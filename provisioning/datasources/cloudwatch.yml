@@ -1,0 +1,17 @@
+apiVersion: 1
+
+deleteDatasources:
+  - name: CloudWatch
+  - name: cloudwatch
+  - name: Amazon CloudWatch
+
+datasources:
+  - name: CloudWatch
+    type: cloudwatch
+    uid: cloudwatch-main
+    access: proxy
+    jsonData:
+      authType: default          # uses EC2 instance role credentials
+      defaultRegion: ap-northeast-2
+      assumeRoleArn: arn:aws:iam::009215122583:role/grafana-cloudwatch-ro
+    editable: true

@@ -1,0 +1,734 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "cloudwatch",
+      "name": "CloudWatch",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 100,
+      "title": "EC2",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "links": [
+            {
+              "title": "Ask Bedrock AI",
+              "url": "https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=EC2 instance ${instance_id} has CPU utilization of ${__value.text} at ${__data.fields[0]}. Is this normal? What could be causing it?",
+              "targetBlank": true
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 1,
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "InstanceId": "$instance_id"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/EC2",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Average"
+        }
+      ],
+      "title": "EC2 CPU Utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "unit": "bytes",
+          "min": 0,
+          "links": [
+            {
+              "title": "Ask Bedrock AI",
+              "url": "https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=EC2 instance ${instance_id} shows ${__series.name} of ${__value.text} at ${__data.fields[0]}. Is this traffic level normal?",
+              "targetBlank": true
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "InstanceId": "$instance_id"
+          },
+          "metricName": "NetworkIn",
+          "namespace": "AWS/EC2",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum",
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "InstanceId": "$instance_id"
+          },
+          "metricName": "NetworkOut",
+          "namespace": "AWS/EC2",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "Sum",
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0
+        }
+      ],
+      "title": "EC2 Network In / Out",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "unit": "iops",
+          "min": 0,
+          "links": [
+            {
+              "title": "Ask Bedrock AI",
+              "url": "https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=EC2 instance ${instance_id} shows ${__series.name} of ${__value.text} at ${__data.fields[0]}. Is this disk I/O healthy?",
+              "targetBlank": true
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 9
+      },
+      "id": 3,
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "InstanceId": "$instance_id"
+          },
+          "metricName": "DiskReadOps",
+          "namespace": "AWS/EC2",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum",
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "InstanceId": "$instance_id"
+          },
+          "metricName": "DiskWriteOps",
+          "namespace": "AWS/EC2",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "Sum",
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0
+        }
+      ],
+      "title": "EC2 Disk Read / Write IOPS",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "mappings": [],
+          "links": [
+            {
+              "title": "Ask Bedrock AI",
+              "url": "https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=EC2 instance ${instance_id} current CPU is ${__value.text}. Is this concerning and what do you recommend?",
+              "targetBlank": true
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 9
+      },
+      "id": 4,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "InstanceId": "$instance_id"
+          },
+          "metricName": "CPUUtilization",
+          "namespace": "AWS/EC2",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Average",
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0
+        }
+      ],
+      "title": "EC2 CPU (current)",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 101,
+      "title": "Lambda \u2014 bedrock-qa",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "unit": "short",
+          "min": 0,
+          "links": [
+            {
+              "title": "Ask Bedrock AI",
+              "url": "https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=Lambda function bedrock-qa had ${__value.text} invocations at ${__data.fields[0]}. Is this traffic level normal?",
+              "targetBlank": true
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 5,
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "FunctionName": "bedrock-qa"
+          },
+          "metricName": "Invocations",
+          "namespace": "AWS/Lambda",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum",
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0
+        }
+      ],
+      "title": "Lambda Invocations",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "unit": "ms",
+          "min": 0,
+          "links": [
+            {
+              "title": "Ask Bedrock AI",
+              "url": "https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=Lambda function bedrock-qa shows ${__series.name} duration of ${__value.text} at ${__data.fields[0]}. Is this performance acceptable?",
+              "targetBlank": true
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 6,
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "FunctionName": "bedrock-qa"
+          },
+          "metricName": "Duration",
+          "namespace": "AWS/Lambda",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Average",
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "FunctionName": "bedrock-qa"
+          },
+          "metricName": "Duration",
+          "namespace": "AWS/Lambda",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "p95",
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0
+        }
+      ],
+      "title": "Lambda Duration (avg / p95)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 20
+          },
+          "unit": "short",
+          "min": 0,
+          "links": [
+            {
+              "title": "Ask Bedrock AI",
+              "url": "https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=Lambda function bedrock-qa shows ${__value.text} ${__series.name} at ${__data.fields[0]}. What could cause this and how should I investigate?",
+              "targetBlank": true
+            }
+          ]
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Errors"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Throttles"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "id": 7,
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "FunctionName": "bedrock-qa"
+          },
+          "metricName": "Errors",
+          "namespace": "AWS/Lambda",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Sum",
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "FunctionName": "bedrock-qa"
+          },
+          "metricName": "Throttles",
+          "namespace": "AWS/Lambda",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "Sum",
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0
+        }
+      ],
+      "title": "Lambda Errors / Throttles",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "unit": "short",
+          "min": 0,
+          "links": [
+            {
+              "title": "Ask Bedrock AI",
+              "url": "https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=Lambda function bedrock-qa has ${__value.text} concurrent executions at ${__data.fields[0]}. Should I be concerned about limits?",
+              "targetBlank": true
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      },
+      "id": 8,
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "FunctionName": "bedrock-qa"
+          },
+          "metricName": "ConcurrentExecutions",
+          "namespace": "AWS/Lambda",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Maximum",
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0
+        }
+      ],
+      "title": "Lambda Concurrent Executions",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 38,
+  "tags": [
+    "aws",
+    "cloudwatch",
+    "ec2",
+    "lambda"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "cloudwatch-main"
+        },
+        "definition": "dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)",
+        "hide": 0,
+        "includeAll": false,
+        "name": "instance_id",
+        "options": [],
+        "query": "dimension_values(default,AWS/EC2,CPUUtilization,InstanceId)",
+        "refresh": 2,
+        "type": "query",
+        "label": "EC2 Instance"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "300",
+          "value": "300"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "name": "period",
+        "options": [
+          {
+            "selected": false,
+            "text": "1m",
+            "value": "60"
+          },
+          {
+            "selected": true,
+            "text": "5m",
+            "value": "300"
+          },
+          {
+            "selected": false,
+            "text": "15m",
+            "value": "900"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "3600"
+          }
+        ],
+        "query": "60,300,900,3600",
+        "type": "custom",
+        "label": "Period"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AWS CloudWatch \u2014 EC2 & Lambda",
+  "uid": "aws-cloudwatch-main",
+  "version": 2
+}

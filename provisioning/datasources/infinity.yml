@@ -1,0 +1,12 @@
+apiVersion: 1
+
+datasources:
+  - name: Infinity
+    type: yesoreyeram-infinity-datasource
+    uid: P_infinity
+    access: proxy
+    editable: true
+    jsonData:
+      allowedHosts:
+        - "http://bedrock-api:8000"
+        - "https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com"
