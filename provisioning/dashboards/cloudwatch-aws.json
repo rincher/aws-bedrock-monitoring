@@ -804,11 +804,13 @@
           },
           "dimensions": {
             "InstanceId": "$instance_id",
-            "path": "/"
+            "path": "/",
+            "device": "nvme0n1p1",
+            "fstype": "xfs"
           },
           "expression": "",
           "id": "",
-          "matchExact": true,
+          "matchExact": false,
           "metricEditorMode": 0,
           "metricQueryType": 0,
           "metricName": "disk_used_percent",
@@ -957,11 +959,13 @@
           },
           "dimensions": {
             "InstanceId": "$instance_id",
-            "path": "/"
+            "path": "/",
+            "device": "nvme0n1p1",
+            "fstype": "xfs"
           },
           "expression": "",
           "id": "",
-          "matchExact": true,
+          "matchExact": false,
           "metricEditorMode": 0,
           "metricQueryType": 0,
           "metricName": "disk_used_percent",
@@ -977,7 +981,7 @@
       "type": "stat"
     }
   ],
-  "refresh": "1m",
+  "refresh": "30s",
   "schemaVersion": 38,
   "tags": [
     "aws",
