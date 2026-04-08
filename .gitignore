@@ -48,3 +48,4 @@ prometheus-storage/
 *.xls
 *.xlsx
 !.env.example
+.aws-sam/

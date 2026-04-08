@@ -1,0 +1,463 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AI-powered AWS monitoring — Amazon Bedrock (Nova Micro) + Grafana
+
+Parameters:
+  GrafanaPassword:
+    Type: String
+    NoEcho: true
+    Default: changeme123
+    Description: Grafana admin password
+  InstanceType:
+    Type: String
+    Default: t3.small
+    AllowedValues: [t3.micro, t3.small, t3.medium]
+  BedrockModel:
+    Type: String
+    Default: us.amazon.nova-micro-v1:0
+  AWSMainRegion:
+    Type: String
+    Default: ap-northeast-2
+
+Globals:
+  Function:
+    Timeout: 120
+    MemorySize: 256
+    Runtime: python3.12
+
+# ─── DynamoDB ────────────────────────────────────────────────────────────────
+
+Resources:
+
+  SessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: bedrock-sessions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: session_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: session_id
+          KeyType: HASH
+
+  MemoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: bedrock-memory
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: memory_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: memory_id
+          KeyType: HASH
+
+# ─── Lambda IAM Role ─────────────────────────────────────────────────────────
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: bedrock-qa-lambda-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: bedrock-qa-permissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: BedrockInvoke
+                Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource: '*'
+              - Sid: DynamoDBAccess
+                Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Scan
+                  - dynamodb:Query
+                Resource:
+                  - !GetAtt SessionsTable.Arn
+                  - !GetAtt MemoryTable.Arn
+              - Sid: AWSReadOnly
+                Effect: Allow
+                Action:
+                  - ec2:Describe*
+                  - rds:Describe*
+                  - s3:ListAllMyBuckets
+                  - ce:GetCostAndUsage
+                  - cloudwatch:GetMetricStatistics
+                  - cloudwatch:ListMetrics
+                  - lambda:ListFunctions
+                  - iam:ListRoles
+                  - tag:GetResources
+                Resource: '*'
+
+# ─── API Gateway ──────────────────────────────────────────────────────────────
+
+  BedrockQAApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - '*'
+        AllowMethods:
+          - GET
+          - POST
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+
+# ─── Lambda Function ─────────────────────────────────────────────────────────
+
+  BedrockQAFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: bedrock-qa
+      CodeUri: lambda/
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          REGION: !Ref AWSMainRegion
+          BEDROCK_MODEL: !Ref BedrockModel
+          SESSION_TABLE: !Ref SessionsTable
+          SESSION_BUCKET: ''
+          # API_URL is set post-deploy via: aws lambda update-function-configuration
+          API_URL: ''
+      Events:
+        GetUI:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BedrockQAApi
+            Path: /ui
+            Method: GET
+        GetHistory:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BedrockQAApi
+            Path: /history
+            Method: GET
+        GetSession:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BedrockQAApi
+            Path: /session/{sessionId}
+            Method: GET
+        DeleteSession:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BedrockQAApi
+            Path: /session/{sessionId}
+            Method: DELETE
+        CompactSession:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BedrockQAApi
+            Path: /compact/{sessionId}
+            Method: POST
+        Ask:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref BedrockQAApi
+            Path: /ask
+            Method: POST
+
+# ─── EC2 Security Group ───────────────────────────────────────────────────────
+
+  GrafanaSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Grafana + Prometheus access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+          Description: Grafana UI
+        - IpProtocol: tcp
+          FromPort: 9090
+          ToPort: 9090
+          CidrIp: 0.0.0.0/0
+          Description: Prometheus UI
+
+# ─── EC2 IAM Role (SSM + CloudWatch) ─────────────────────────────────────────
+
+  GrafanaEC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: grafana-monitoring-ec2-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      Policies:
+        - PolicyName: grafana-cloudwatch-read
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:ListMetrics
+                  - cloudwatch:GetMetricData
+                  - cloudwatch:GetMetricStatistics
+                  - cloudwatch:DescribeAlarms
+                  - cloudwatch:DescribeAlarmHistory
+                  - cloudwatch:DescribeAlarmsForMetric
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                  - logs:GetLogEvents
+                  - logs:StartQuery
+                  - logs:StopQuery
+                  - logs:GetQueryResults
+                  - logs:GetLogGroupFields
+                  - ec2:DescribeRegions
+                  - tag:GetResources
+                Resource: '*'
+
+  GrafanaInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: grafana-monitoring-ec2-profile
+      Roles:
+        - !Ref GrafanaEC2Role
+
+# ─── EC2 Instance (Grafana + Prometheus) ─────────────────────────────────────
+
+  GrafanaInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: BedrockQAFunction
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
+      IamInstanceProfile: !Ref GrafanaInstanceProfile
+      SecurityGroups:
+        - !Ref GrafanaSG
+      Tags:
+        - Key: Name
+          Value: grafana-monitoring
+      UserData:
+        Fn::Base64:
+          !Sub
+            - |
+              #!/bin/bash
+              set -e
+              yum update -y
+              yum install -y docker amazon-cloudwatch-agent
+              systemctl enable docker && systemctl start docker
+              mkdir -p /usr/local/lib/docker/cli-plugins
+              curl -fsSL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+                -o /usr/local/lib/docker/cli-plugins/docker-compose
+              chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+              M=/home/ec2-user/monitoring
+              mkdir -p $M/provisioning/dashboards $M/provisioning/datasources
+
+              # ── docker-compose.yml ──────────────────────────────────────
+              cat > $M/docker-compose.yml << 'COMPOSE'
+              services:
+                prometheus:
+                  image: prom/prometheus:latest
+                  container_name: prometheus
+                  ports: ["9090:9090"]
+                  volumes:
+                    - ./prometheus.yml:/etc/prometheus/prometheus.yml
+                    - prometheus-storage:/prometheus
+                  command:
+                    - '--config.file=/etc/prometheus/prometheus.yml'
+                    - '--storage.tsdb.path=/prometheus'
+                    - '--web.enable-lifecycle'
+                  networks: [monitoring]
+                  restart: unless-stopped
+                grafana:
+                  image: grafana/grafana:latest
+                  container_name: grafana
+                  ports: ["3000:3000"]
+                  environment:
+                    - GF_SECURITY_ADMIN_USER=admin
+                    - GF_SECURITY_ADMIN_PASSWORD=GRAFANA_PASSWORD_PLACEHOLDER
+                    - GF_USERS_ALLOW_SIGN_UP=false
+                    - GF_PANELS_DISABLE_SANITIZE_HTML=true
+                    - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
+                  volumes:
+                    - grafana-storage:/var/lib/grafana
+                    - ./provisioning:/etc/grafana/provisioning
+                  networks: [monitoring]
+                  restart: unless-stopped
+              volumes:
+                prometheus-storage:
+                grafana-storage:
+              networks:
+                monitoring:
+                  driver: bridge
+              COMPOSE
+
+              sed -i "s/GRAFANA_PASSWORD_PLACEHOLDER/${GrafanaPassword}/" $M/docker-compose.yml
+
+              # ── prometheus.yml ──────────────────────────────────────────
+              cat > $M/prometheus.yml << 'PROM'
+              global:
+                scrape_interval: 15s
+              scrape_configs:
+                - job_name: prometheus
+                  static_configs:
+                    - targets: ['localhost:9090']
+                - job_name: grafana
+                  static_configs:
+                    - targets: ['grafana:3000']
+              PROM
+
+              # ── dashboards.yml ──────────────────────────────────────────
+              cat > $M/provisioning/dashboards/dashboards.yml << 'DASH'
+              apiVersion: 1
+              providers:
+                - name: default
+                  folder: ''
+                  type: file
+                  disableDeletion: false
+                  updateIntervalSeconds: 10
+                  allowUiUpdates: false
+                  editable: true
+                  options:
+                    path: /etc/grafana/provisioning/dashboards
+              DASH
+
+              # ── CloudWatch datasource ────────────────────────────────────
+              cat > $M/provisioning/datasources/cloudwatch.yml << 'CW'
+              apiVersion: 1
+              deleteDatasources:
+                - name: CloudWatch
+                - name: cloudwatch
+              datasources:
+                - name: CloudWatch
+                  type: cloudwatch
+                  uid: cloudwatch-main
+                  access: proxy
+                  jsonData:
+                    authType: default
+                    defaultRegion: ${AWSMainRegion}
+                  editable: true
+              CW
+
+              # ── Prometheus datasource ────────────────────────────────────
+              cat > $M/provisioning/datasources/prometheus.yml << 'PROMD'
+              apiVersion: 1
+              datasources:
+                - name: Prometheus
+                  type: prometheus
+                  access: proxy
+                  url: http://prometheus:9090
+                  isDefault: true
+                  editable: true
+              PROMD
+
+              # ── Bedrock Q&A dashboard ────────────────────────────────────
+              cat > $M/provisioning/dashboards/bedrock-qa.json << BQDASH
+              {
+                "annotations": { "list": [] },
+                "editable": true,
+                "panels": [{
+                  "gridPos": { "h": 40, "w": 24, "x": 0, "y": 0 },
+                  "id": 1,
+                  "options": {
+                    "mode": "html",
+                    "content": "<iframe src=\"${ApiUrl}/ui?q=GRAFANA_Q_VAR\" style=\"width:100%;height:750px;border:none;\"></iframe>"
+                  },
+                  "title": "",
+                  "type": "text"
+                }],
+                "refresh": "",
+                "schemaVersion": 39,
+                "tags": ["bedrock", "ai"],
+                "templating": {
+                  "list": [{
+                    "name": "q", "type": "textbox", "label": "Question",
+                    "hide": 2, "current": { "value": "" },
+                    "options": [{ "selected": true, "text": "", "value": "" }],
+                    "query": ""
+                  }]
+                },
+                "time": { "from": "now-6h", "to": "now" },
+                "timepicker": { "hidden": true },
+                "timezone": "browser",
+                "title": "Bedrock Q&A",
+                "uid": "bedrock-qa",
+                "version": 1
+              }
+              BQDASH
+
+              # ── CloudWatch Agent config ──────────────────────────────────
+              cat > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json << 'CWAGENT'
+              {
+                "agent": { "metrics_collection_interval": 60, "run_as_user": "root" },
+                "metrics": {
+                  "namespace": "CWAgent",
+                  "append_dimensions": { "InstanceId": "CWAGENT_INSTANCE_ID" },
+                  "metrics_collected": {
+                    "mem": {
+                      "measurement": ["mem_used_percent"],
+                      "metrics_collection_interval": 60
+                    },
+                    "disk": {
+                      "measurement": ["used_percent"],
+                      "resources": ["/"],
+                      "metrics_collection_interval": 60
+                    }
+                  }
+                }
+              }
+              CWAGENT
+
+              /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+                -a fetch-config -m ec2 \
+                -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+
+              # Fix runtime placeholders
+              INSTANCE_ID=$(curl -s http://169.254.169.254/latest/meta-data/instance-id)
+              sed -i "s/CWAGENT_INSTANCE_ID/${!INSTANCE_ID}/" /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+              sed -i 's/GRAFANA_Q_VAR/${!q}/' $M/provisioning/dashboards/bedrock-qa.json
+
+              chown -R ec2-user:ec2-user /home/ec2-user/monitoring
+              cd $M && docker compose up -d
+
+              # Enable docker on reboot
+              echo "@reboot ec2-user cd /home/ec2-user/monitoring && docker compose up -d" >> /etc/crontab
+
+            - ApiUrl: !Sub 'https://${BedrockQAApi}.execute-api.${AWS::Region}.amazonaws.com'
+
+# ─── Outputs ──────────────────────────────────────────────────────────────────
+
+Outputs:
+  ChatUIUrl:
+    Description: Bedrock Q&A chat interface
+    Value: !Sub 'https://${BedrockQAApi}.execute-api.${AWS::Region}.amazonaws.com/ui'
+
+  ApiGatewayUrl:
+    Description: API Gateway base URL
+    Value: !Sub 'https://${BedrockQAApi}.execute-api.${AWS::Region}.amazonaws.com'
+
+  GrafanaInstanceId:
+    Description: EC2 instance ID (use SSM to connect)
+    Value: !Ref GrafanaInstance
+
+  GrafanaConnectCommand:
+    Description: Connect to Grafana via SSM
+    Value: !Sub 'aws ssm start-session --target ${GrafanaInstance} --region ${AWS::Region}'
