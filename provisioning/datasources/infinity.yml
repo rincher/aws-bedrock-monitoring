@@ -9,4 +9,4 @@ datasources:
     jsonData:
       allowedHosts:
         - "http://bedrock-api:8000"
-        - "https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com"
+        - "https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com"

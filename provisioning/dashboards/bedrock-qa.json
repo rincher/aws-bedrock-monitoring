@@ -11,7 +11,7 @@
       "options": {
         "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false },
         "mode": "html",
-        "content": "<iframe src=\"https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com/prod/ui\" style=\"width:100%;height:750px;border:none;display:block;\"></iframe>"
+        "content": "<iframe src=\"https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/ui\" style=\"width:100%;height:750px;border:none;display:block;\"></iframe>"
       },
       "title": "",
       "type": "text"

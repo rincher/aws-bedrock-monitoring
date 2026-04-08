@@ -12,6 +12,9 @@ env/
 # Lambda build artifacts
 *.zip
 
+# Claude Code
+.claude/
+
 # macOS
 .DS_Store
 .AppleDouble

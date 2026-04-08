@@ -13,5 +13,5 @@ datasources:
     jsonData:
       authType: default          # uses EC2 instance role credentials
       defaultRegion: ap-northeast-2
-      assumeRoleArn: arn:aws:iam::009215122583:role/grafana-cloudwatch-ro
+      assumeRoleArn: arn:aws:iam::YOUR_ACCOUNT_ID:role/grafana-cloudwatch-ro
     editable: true
