@@ -11,7 +11,7 @@
       "options": {
         "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false },
         "mode": "html",
-        "content": "<iframe src=\"https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/ui\" style=\"width:100%;height:750px;border:none;display:block;\"></iframe>"
+        "content": "<iframe src=\"https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=${q}\" style=\"width:100%;height:750px;border:none;display:block;\"></iframe>"
       },
       "title": "",
       "type": "text"
@@ -20,7 +20,19 @@
   "refresh": "",
   "schemaVersion": 39,
   "tags": ["bedrock", "ai"],
-  "templating": { "list": [] },
+  "templating": {
+    "list": [
+      {
+        "name": "q",
+        "type": "textbox",
+        "label": "Question",
+        "hide": 2,
+        "current": { "value": "" },
+        "options": [{ "selected": true, "text": "", "value": "" }],
+        "query": ""
+      }
+    ]
+  },
   "time": { "from": "now-6h", "to": "now" },
   "timepicker": { "hidden": true },
   "timezone": "browser",

@@ -55,7 +55,7 @@
           "links": [
             {
               "title": "Ask Bedrock AI",
-              "url": "https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=EC2 instance ${instance_id} has CPU utilization of ${__value.text} at ${__data.fields[0]}. Is this normal? What could be causing it?",
+              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 instance ${instance_id} has CPU utilization of ${__value.text} at ${__data.fields[0]}. Is this normal? What could be causing it?",
               "targetBlank": true
             }
           ]
@@ -118,7 +118,7 @@
           "links": [
             {
               "title": "Ask Bedrock AI",
-              "url": "https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=EC2 instance ${instance_id} shows ${__series.name} of ${__value.text} at ${__data.fields[0]}. Is this traffic level normal?",
+              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 instance ${instance_id} shows ${__series.name} of ${__value.text} at ${__data.fields[0]}. Is this traffic level normal?",
               "targetBlank": true
             }
           ]
@@ -197,7 +197,7 @@
           "links": [
             {
               "title": "Ask Bedrock AI",
-              "url": "https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=EC2 instance ${instance_id} shows ${__series.name} of ${__value.text} at ${__data.fields[0]}. Is this disk I/O healthy?",
+              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 instance ${instance_id} shows ${__series.name} of ${__value.text} at ${__data.fields[0]}. Is this disk I/O healthy?",
               "targetBlank": true
             }
           ]
@@ -291,7 +291,7 @@
           "links": [
             {
               "title": "Ask Bedrock AI",
-              "url": "https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=EC2 instance ${instance_id} current CPU is ${__value.text}. Is this concerning and what do you recommend?",
+              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 instance ${instance_id} current CPU is ${__value.text}. Is this concerning and what do you recommend?",
               "targetBlank": true
             }
           ]
@@ -371,7 +371,7 @@
           "links": [
             {
               "title": "Ask Bedrock AI",
-              "url": "https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=Lambda function bedrock-qa had ${__value.text} invocations at ${__data.fields[0]}. Is this traffic level normal?",
+              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=Lambda function bedrock-qa had ${__value.text} invocations at ${__data.fields[0]}. Is this traffic level normal?",
               "targetBlank": true
             }
           ]
@@ -429,7 +429,7 @@
           "links": [
             {
               "title": "Ask Bedrock AI",
-              "url": "https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=Lambda function bedrock-qa shows ${__series.name} duration of ${__value.text} at ${__data.fields[0]}. Is this performance acceptable?",
+              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=Lambda function bedrock-qa shows ${__series.name} duration of ${__value.text} at ${__data.fields[0]}. Is this performance acceptable?",
               "targetBlank": true
             }
           ]
@@ -508,7 +508,7 @@
           "links": [
             {
               "title": "Ask Bedrock AI",
-              "url": "https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=Lambda function bedrock-qa shows ${__value.text} ${__series.name} at ${__data.fields[0]}. What could cause this and how should I investigate?",
+              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=Lambda function bedrock-qa shows ${__value.text} ${__series.name} at ${__data.fields[0]}. What could cause this and how should I investigate?",
               "targetBlank": true
             }
           ]
@@ -619,7 +619,7 @@
           "links": [
             {
               "title": "Ask Bedrock AI",
-              "url": "https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=Lambda function bedrock-qa has ${__value.text} concurrent executions at ${__data.fields[0]}. Should I be concerned about limits?",
+              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=Lambda function bedrock-qa has ${__value.text} concurrent executions at ${__data.fields[0]}. Should I be concerned about limits?",
               "targetBlank": true
             }
           ]
