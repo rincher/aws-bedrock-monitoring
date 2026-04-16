@@ -42,6 +42,8 @@ services:
   bedrock-api:
     build: ./proxy
     container_name: bedrock-api
+    ports:
+      - "8000:8000"
     restart: unless-stopped
     networks:
       - monitoring

@@ -35,6 +35,11 @@ def _invoke(method: str, path: str, body=None, qs: dict = None):
     return json.loads(resp["Payload"].read())
 
 
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 @app.api_route("/{path:path}", methods=["GET", "POST", "DELETE"])
 async def proxy(path: str, request: Request):
     body = None
