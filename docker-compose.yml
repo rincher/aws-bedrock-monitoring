@@ -44,6 +44,10 @@ services:
     container_name: bedrock-api
     ports:
       - "8000:8000"
+    environment:
+      - REGION=ap-northeast-2
+      - LAMBDA_FUNCTION=bedrock-qa
+      - AGENTCORE_RUNTIME_ARN=${AGENTCORE_RUNTIME_ARN:-}
     restart: unless-stopped
     networks:
       - monitoring
