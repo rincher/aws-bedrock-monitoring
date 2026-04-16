@@ -1,0 +1,149 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: EC2 Alerts
+    folder: AWS Monitoring
+    interval: 1m
+    rules:
+      - uid: ec2-cpu-high
+        title: EC2 CPU High (>80%)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: cloudwatch-main
+            model:
+              dimensions:
+                InstanceId: ["*"]
+              expression: ""
+              id: ""
+              matchExact: false
+              metricEditorMode: 0
+              metricName: CPUUtilization
+              metricQueryType: 0
+              namespace: AWS/EC2
+              period: "300"
+              queryMode: Metrics
+              refId: A
+              region: default
+              statistic: Average
+          - refId: B
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [80]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [B]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "EC2 CPU above 80%"
+          description: "EC2 instance {{ $labels.InstanceId }} CPU utilization has been above 80% for more than 5 minutes. Current value: {{ $values.C }}%"
+        labels:
+          severity: warning
+        isPaused: false
+
+      - uid: ec2-mem-high
+        title: EC2 Memory High (>85%)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: cloudwatch-main
+            model:
+              dimensions:
+                InstanceId: ["*"]
+              expression: ""
+              id: ""
+              matchExact: false
+              metricEditorMode: 0
+              metricName: mem_used_percent
+              metricQueryType: 0
+              namespace: CWAgent
+              period: "300"
+              queryMode: Metrics
+              refId: A
+              region: default
+              statistic: Average
+          - refId: B
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [85]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [B]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: __expr__
+                uid: __expr__
+              expression: B
+              refId: C
+              type: threshold
+        noDataState: NoData
+        execErrState: Error
+        for: 5m
+        annotations:
+          summary: "EC2 Memory above 85%"
+          description: "EC2 instance {{ $labels.InstanceId }} memory usage has been above 85% for more than 5 minutes. Current value: {{ $values.C }}%"
+        labels:
+          severity: warning
+        isPaused: false

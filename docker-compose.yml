@@ -26,6 +26,12 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_PANELS_DISABLE_SANITIZE_HTML=true
       - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=${SMTP_HOST}
+      - GF_SMTP_USER=${SMTP_USER}
+      - GF_SMTP_PASSWORD=${SMTP_PASSWORD}
+      - GF_SMTP_FROM_ADDRESS=${SMTP_FROM_ADDRESS}
+      - GF_SMTP_FROM_NAME=Grafana AWS Monitoring
     volumes:
       - grafana-storage:/var/lib/grafana
       - ./provisioning:/etc/grafana/provisioning

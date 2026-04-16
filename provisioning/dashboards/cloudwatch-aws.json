@@ -97,7 +97,14 @@
         }
       ],
       "title": "EC2 CPU Utilization",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Ask Bedrock AI about this visualization",
+          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Analyze the EC2 instance ${instance_id} CPU utilization trend over this time range. Is the pattern healthy? Any spikes or sustained high usage worth investigating?",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -176,7 +183,14 @@
         }
       ],
       "title": "EC2 Network In / Out",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Ask Bedrock AI about this visualization",
+          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Analyze the EC2 instance ${instance_id} network traffic (In and Out) over this time range. Are there any anomalies or unexpected traffic patterns?",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -255,7 +269,14 @@
         }
       ],
       "title": "EC2 Disk Read / Write IOPS",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Ask Bedrock AI about this visualization",
+          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Analyze the EC2 instance ${instance_id} disk read and write IOPS over this time range. Is the I/O pattern normal for this workload?",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -338,7 +359,14 @@
         }
       ],
       "title": "EC2 CPU (current)",
-      "type": "stat"
+      "type": "stat",
+      "links": [
+        {
+          "title": "Ask Bedrock AI about this visualization",
+          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=What is the current CPU utilization of EC2 instance ${instance_id}? Is this level a concern?",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "collapsed": false,
@@ -408,7 +436,14 @@
         }
       ],
       "title": "Lambda Invocations",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Ask Bedrock AI about this visualization",
+          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Analyze Lambda function invocations over this time range. Are there any unusual spikes or drops in call volume?",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -487,7 +522,14 @@
         }
       ],
       "title": "Lambda Duration (avg / p95)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Ask Bedrock AI about this visualization",
+          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Analyze Lambda function execution duration (average and p95) over this time range. Is the performance healthy? Any latency increases?",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -598,7 +640,14 @@
         }
       ],
       "title": "Lambda Errors / Throttles",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Ask Bedrock AI about this visualization",
+          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Are there Lambda errors or throttles over this time range? What could be causing them and how should they be addressed?",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -656,7 +705,14 @@
         }
       ],
       "title": "Lambda Concurrent Executions",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Ask Bedrock AI about this visualization",
+          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Analyze Lambda concurrent executions over this time range. Are we approaching concurrency limits?",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "collapsed": false,
@@ -744,7 +800,14 @@
         }
       ],
       "title": "EC2 Memory Usage",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Ask Bedrock AI about this visualization",
+          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Analyze EC2 instance ${instance_id} memory usage over this time range. Is there memory pressure or a potential leak?",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -823,7 +886,14 @@
         }
       ],
       "title": "EC2 Disk Usage (/)",
-      "type": "timeseries"
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "Ask Bedrock AI about this visualization",
+          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Analyze EC2 instance ${instance_id} disk usage for / over this time range. Is there risk of running out of space soon?",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -899,7 +969,14 @@
         }
       ],
       "title": "Memory (current)",
-      "type": "stat"
+      "type": "stat",
+      "links": [
+        {
+          "title": "Ask Bedrock AI about this visualization",
+          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=What is the current memory usage of EC2 instance ${instance_id}? Is this level a concern?",
+          "targetBlank": true
+        }
+      ]
     },
     {
       "datasource": {
@@ -978,7 +1055,14 @@
         }
       ],
       "title": "Disk Usage / (current)",
-      "type": "stat"
+      "type": "stat",
+      "links": [
+        {
+          "title": "Ask Bedrock AI about this visualization",
+          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=What is the current disk usage of / on EC2 instance ${instance_id}? Is disk space running low?",
+          "targetBlank": true
+        }
+      ]
     }
   ],
   "refresh": "30s",

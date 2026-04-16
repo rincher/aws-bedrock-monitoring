@@ -18,6 +18,18 @@ Parameters:
   AWSMainRegion:
     Type: String
     Default: ap-northeast-2
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where EC2 and ALB are deployed
+  PrivateSubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Private subnet for EC2 instance
+  PublicSubnet1Id:
+    Type: AWS::EC2::Subnet::Id
+    Description: Public subnet 1 for ALB
+  PublicSubnet2Id:
+    Type: AWS::EC2::Subnet::Id
+    Description: Public subnet 2 for ALB (different AZ)
 
 Globals:
   Function:
@@ -175,23 +187,43 @@ Resources:
             Path: /ask
             Method: POST
 
+# ─── ALB Security Group ───────────────────────────────────────────────────────
+
+  AlbSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Internet-facing ALB for Grafana
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP from internet
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS from internet
+
 # ─── EC2 Security Group ───────────────────────────────────────────────────────
 
   GrafanaSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Grafana + Prometheus access
+      GroupDescription: Grafana + Prometheus access (ALB only)
+      VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 3000
           ToPort: 3000
-          CidrIp: 0.0.0.0/0
-          Description: Grafana UI
+          SourceSecurityGroupId: !Ref AlbSG
+          Description: Grafana UI from ALB
         - IpProtocol: tcp
           FromPort: 9090
           ToPort: 9090
-          CidrIp: 0.0.0.0/0
-          Description: Prometheus UI
+          SourceSecurityGroupId: !Ref AlbSG
+          Description: Prometheus UI from ALB
 
 # ─── EC2 IAM Role (SSM + CloudWatch) ─────────────────────────────────────────
 
@@ -242,6 +274,41 @@ Resources:
 
 # ─── EC2 Instance (Grafana + Prometheus) ─────────────────────────────────────
 
+  GrafanaALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: grafana-alb
+      Scheme: internet-facing
+      Type: application
+      SecurityGroups:
+        - !Ref AlbSG
+      Subnets:
+        - !Ref PublicSubnet1Id
+        - !Ref PublicSubnet2Id
+
+  GrafanaTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: grafana-tg
+      Port: 3000
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+      TargetType: instance
+      HealthCheckPath: /api/health
+      HealthCheckIntervalSeconds: 30
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
+
+  GrafanaListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref GrafanaALB
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref GrafanaTargetGroup
+
   GrafanaInstance:
     Type: AWS::EC2::Instance
     DependsOn: BedrockQAFunction
@@ -249,7 +316,8 @@ Resources:
       InstanceType: !Ref InstanceType
       ImageId: !Sub '{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}'
       IamInstanceProfile: !Ref GrafanaInstanceProfile
-      SecurityGroups:
+      SubnetId: !Ref PrivateSubnetId
+      SecurityGroupIds:
         - !Ref GrafanaSG
       Tags:
         - Key: Name
@@ -442,6 +510,13 @@ Resources:
               echo "@reboot ec2-user cd /home/ec2-user/monitoring && docker compose up -d" >> /etc/crontab
 
             - ApiUrl: !Sub 'https://${BedrockQAApi}.execute-api.${AWS::Region}.amazonaws.com'
+
+  GrafanaTargetGroupAttachment:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroupAttachment
+    Properties:
+      TargetGroupArn: !Ref GrafanaTargetGroup
+      TargetId: !Ref GrafanaInstance
+      Port: 3000
 
 # ─── Outputs ──────────────────────────────────────────────────────────────────
 

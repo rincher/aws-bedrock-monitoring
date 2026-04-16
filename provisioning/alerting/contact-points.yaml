@@ -1,0 +1,11 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: Bedrock-AI-Webhook
+    receivers:
+      - uid: bedrock-webhook
+        type: webhook
+        settings:
+          url: https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/webhook
+          httpMethod: POST

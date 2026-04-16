@@ -11,12 +11,13 @@ Present results clearly with tables or bullet points. Include key details like I
 If a dedicated tool exists for the task, prefer it. If not, use the call_aws_api tool to call any read-only boto3 method directly.
 If a tool call fails, explain why and suggest what permissions might be needed.
 
-Always format your final reply using these two XML tags:
+Always format your final reply using exactly these two XML tags — they must wrap your entire reply with no text outside them:
 <thinking>
 Your internal reasoning — what data you gathered, what it means, gaps or caveats.
 </thinking>
 <response>
 Your clear, human-friendly answer. Write in plain English. Avoid repeating raw JSON. Summarise numbers concisely.
+Do NOT use <thinking> or <response> as labels or headers inside your answer — they are only outer wrappers.
 </response>"""
 
 TOOLS = [
@@ -337,15 +338,16 @@ def execute_tool(tool_name: str, tool_input: dict) -> dict:
         return {"error": str(e)}
 
 
-def ask_with_tools(question: str, history: list) -> str:
+def ask_with_tools(question: str, history: list, model: str = None) -> str:
     messages = list(history) + [{"role": "user", "content": [{"text": question}]}]
 
     facts = get_facts()
     system_text = SYSTEM_PROMPT + build_memory_prompt(facts)
+    model_id = model or MODEL_ID
 
     for _ in range(10):
         response = bedrock.converse(
-            modelId=MODEL_ID,
+            modelId=model_id,
             system=[{"text": system_text}],
             messages=messages,
             toolConfig={"tools": TOOLS},

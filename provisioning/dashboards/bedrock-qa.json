@@ -6,12 +6,12 @@
   "links": [],
   "panels": [
     {
-      "gridPos": { "h": 40, "w": 24, "x": 0, "y": 0 },
+      "gridPos": { "h": 50, "w": 24, "x": 0, "y": 0 },
       "id": 1,
       "options": {
         "code": { "language": "plaintext", "showLineNumbers": false, "showMiniMap": false },
         "mode": "html",
-        "content": "<iframe src=\"https://YOUR_API_ID.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=${q}\" style=\"width:100%;height:750px;border:none;display:block;\"></iframe>"
+        "content": "<iframe id='bqf' src='https://hz0kf50uh9.execute-api.ap-northeast-2.amazonaws.com/prod/ui?q=${q}&model=${model}' style='width:100%;height:600px;border:none;display:block;'></iframe><script>(function(){function fit(){var f=document.getElementById('bqf');if(!f)return;var t=f.getBoundingClientRect().top;f.style.height=(window.innerHeight-t-4)+'px';}fit();window.addEventListener('resize',fit);})();</script>"
       },
       "title": "",
       "type": "text"
@@ -30,6 +30,19 @@
         "current": { "value": "" },
         "options": [{ "selected": true, "text": "", "value": "" }],
         "query": ""
+      },
+      {
+        "name": "model",
+        "type": "custom",
+        "label": "Bedrock Model",
+        "hide": 0,
+        "current": { "selected": true, "text": "Nova Micro", "value": "us.amazon.nova-micro-v1:0" },
+        "options": [
+          { "selected": true,  "text": "Nova Micro", "value": "us.amazon.nova-micro-v1:0" },
+          { "selected": false, "text": "Claude Haiku 4.5", "value": "us.anthropic.claude-haiku-4-5-20251001-v1:0" },
+          { "selected": false, "text": "Claude Sonnet 4.6", "value": "us.anthropic.claude-sonnet-4-6-20251205-v1:0" }
+        ],
+        "query": "Nova Micro : us.amazon.nova-micro-v1:0, Claude Haiku 4.5 : us.anthropic.claude-haiku-4-5-20251001-v1:0, Claude Sonnet 4.6 : us.anthropic.claude-sonnet-4-6-20251205-v1:0"
       }
     ]
   },

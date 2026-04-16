@@ -95,6 +95,7 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #0f111a; c
 <script>
 var API = 'API_URL_PLACEHOLDER';
 var sessionId = '';
+var MODEL_OVERRIDE = new URLSearchParams(window.location.search).get('model') || '';
 
 function escHtml(t) {
   return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -102,7 +103,7 @@ function escHtml(t) {
 
 function parseThinkingResponse(text) {
   var tMatch = text.match(/<thinking>([\s\S]*?)<\/thinking>/i);
-  var rMatch = text.match(/<response>([\s\S]*?)<\/response>/i);
+  var rMatch = text.match(/<response>([\s\S]*)<\/response>/i);
   if (!tMatch && !rMatch) return { thinking: null, response: text };
   return {
     thinking: tMatch ? tMatch[1].trim() : null,
@@ -304,7 +305,7 @@ function send() {
   fetch(API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question: q, session_id: sessionId })
+    body: JSON.stringify({ question: q, session_id: sessionId, model: MODEL_OVERRIDE || undefined })
   })
   .then(function(r) { return r.json(); })
   .then(function(d) {
@@ -352,7 +353,7 @@ if (autoQ) {
   fetch(API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question: autoQ })
+    body: JSON.stringify({ question: autoQ, model: MODEL_OVERRIDE || undefined })
   })
   .then(function(r) { return r.json(); })
   .then(function(d) {
