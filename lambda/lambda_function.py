@@ -2,9 +2,8 @@ import json
 import os
 import re
 import uuid
-import boto3
 
-from config import API_URL, MODEL_ID, FUNCTION_NAME, REGION
+from config import API_URL, MODEL_ID
 from agent import MODEL_SONNET
 
 _MYSQL_PATTERN = re.compile(
@@ -21,7 +20,7 @@ def _resolve_model(question: str, requested: str | None) -> str | None:
     return requested or None
 from session import (
     _load_history, _save_history, session_handler, history_handler, compact_handler, delete_handler,
-    save_async_request, complete_async_request, fail_async_request, get_async_request,
+    complete_async_request, fail_async_request, get_async_request,
 )
 from agent import ask_with_tools
 from memory import extract_and_store
@@ -116,23 +115,16 @@ def lambda_handler(event, context):
         session_id = body.get("session_id", "").strip() or str(uuid.uuid4())
         user_id    = body.get("user_id", "").strip()
         model      = _resolve_model(question, body.get("model", "").strip() or None)
-        request_id = str(uuid.uuid4())
+        history    = _load_history(session_id)
 
-        save_async_request(request_id, question, session_id, user_id, model or "")
+        answer, used_model = ask_with_tools(question, history, model=model)
 
-        boto3.client("lambda", region_name=REGION).invoke(
-            FunctionName=FUNCTION_NAME,
-            InvocationType="Event",
-            Payload=json.dumps({"_async_ask": {
-                "request_id": request_id,
-                "question":   question,
-                "session_id": session_id,
-                "user_id":    user_id,
-                "model":      model,
-            }}).encode(),
-        )
+        history.append({"role": "user",      "content": [{"text": question}]})
+        history.append({"role": "assistant", "content": [{"text": answer}]})
+        _save_history(session_id, history, user_id=user_id)
+        extract_and_store(question, answer)
 
-        return api_response(200, {"request_id": request_id, "session_id": session_id, "status": "pending"})
+        return api_response(200, {"answer": answer, "model": used_model, "session_id": session_id})
 
     except Exception as e:
         return api_response(500, {"error": str(e)})

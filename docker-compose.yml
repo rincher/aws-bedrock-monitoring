@@ -39,6 +39,13 @@ services:
       - monitoring
     restart: unless-stopped
 
+  bedrock-api:
+    build: ./proxy
+    container_name: bedrock-api
+    restart: unless-stopped
+    networks:
+      - monitoring
+
 volumes:
   prometheus-storage:
   grafana-storage:
