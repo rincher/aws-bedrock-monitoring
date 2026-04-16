@@ -66,27 +66,29 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #0f111a; c
 #btn { width: 32px; height: 32px; background: linear-gradient(135deg,#2b6cb0,#3182ce); border: none; border-radius: 7px; color: white; font-size: 14px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all .15s; }
 #btn:hover { background: linear-gradient(135deg,#3182ce,#63b3ed); transform: scale(1.05); }
 #btn:disabled { background: #2d3748; cursor: not-allowed; transform: none; }
+#btn.stop { background: linear-gradient(135deg,#742a2a,#c53030); }
+#btn.stop:hover { background: linear-gradient(135deg,#c53030,#fc8181); transform: scale(1.05); }
 </style>
 </head>
 <body>
 <div id="header">
   <div class="title">&#9729; AWS Bedrock AI</div>
   <div class="badge">LIVE ACCOUNT</div>
-  <div class="dot"><span></span> Connected</div>
+  <div class="dot"><span></span> 연결됨</div>
 </div>
 <div id="main">
   <div id="sidebar">
     <div id="sidebar-header">
-      <span>Sessions</span>
-      <button id="new-chat-btn" onclick="newChat()">+ New</button>
+      <span>세션</span>
+      <button id="new-chat-btn" onclick="newChat()">+ 새 대화</button>
     </div>
-    <div id="session-list"><div style="padding:12px;font-size:11px;color:#4a5568">Loading...</div></div>
+    <div id="session-list"><div style="padding:12px;font-size:11px;color:#4a5568">로딩 중...</div></div>
   </div>
   <div id="chat-area">
     <div id="chat"></div>
     <div id="input-area">
       <div id="input-wrap">
-        <textarea id="q" rows="1" placeholder="Ask anything about your AWS account..."></textarea>
+        <textarea id="q" rows="1" placeholder="AWS 계정에 대해 무엇이든 물어보세요..."></textarea>
         <button id="btn" onclick="send()">&#9654;</button>
       </div>
     </div>
@@ -96,6 +98,59 @@ body { font-family: system-ui, -apple-system, sans-serif; background: #0f111a; c
 var API = 'API_URL_PLACEHOLDER';
 var sessionId = '';
 var MODEL_OVERRIDE = new URLSearchParams(window.location.search).get('model') || '';
+var GRAFANA_USER = new URLSearchParams(window.location.search).get('user') || '';
+var currentController = null;
+var pollingTimer = null;
+
+var MODEL_NAMES = {
+  'us.amazon.nova-micro-v1:0':                      'Nova Micro',
+  'us.amazon.nova-lite-v1:0':                       'Nova Lite',
+  'us.amazon.nova-pro-v1:0':                        'Nova Pro',
+  'us.anthropic.claude-haiku-4-5-20251001-v1:0':    'Claude Haiku 4.5',
+  'us.anthropic.claude-sonnet-4-5-20250929-v1:0':   'Claude Sonnet 4.5',
+  'us.anthropic.claude-sonnet-4-6-20251031-v1:0':   'Claude Sonnet 4.6',
+  'us.anthropic.claude-opus-4-6-20251231-v1:0':     'Claude Opus 4.6',
+};
+function modelLabel(id) {
+  return MODEL_NAMES[id] || (id ? id.split('.').pop().replace(/-v\d.*/, '') : '');
+}
+
+function stopPolling() {
+  if (pollingTimer) { clearInterval(pollingTimer); pollingTimer = null; }
+}
+
+function setStopMode(active) {
+  var btn = document.getElementById('btn');
+  if (active) {
+    btn.innerHTML = '&#9632;';
+    btn.classList.add('stop');
+    btn.disabled = false;
+    btn.onclick = function() {
+      stopPolling();
+      if (currentController) currentController.abort();
+    };
+  } else {
+    btn.innerHTML = '&#9654;';
+    btn.classList.remove('stop');
+    btn.disabled = false;
+    btn.onclick = send;
+    currentController = null;
+  }
+}
+
+function pollResult(requestId, typing, t0, onResult) {
+  pollingTimer = setInterval(function() {
+    fetch(API.replace('/ask', '/result/' + requestId))
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (d.status === 'done' || d.status === 'error') {
+          stopPolling();
+          onResult(d);
+        }
+      })
+      .catch(function() {}); // keep polling on transient errors
+  }, 2000);
+}
 
 function escHtml(t) {
   return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -128,7 +183,7 @@ function addMsg(text, isUser, animate) {
       tb.className = 'thinking-block';
       var tg = document.createElement('div');
       tg.className = 'thinking-toggle';
-      tg.innerHTML = '<span class="t-icon">&#9658;</span><span>Thinking</span>';
+      tg.innerHTML = '<span class="t-icon">&#9658;</span><span>생각 중</span>';
       var td = document.createElement('div');
       td.className = 'thinking-body';
       td.textContent = parsed.thinking;
@@ -192,7 +247,7 @@ function setActiveSession(id) {
 function loadSession(id) {
   setActiveSession(id);
   document.getElementById('chat').innerHTML = '';
-  var loading = addMsg('Loading conversation...', false, false);
+  var loading = addMsg('대화를 불러오는 중...', false, false);
   fetch(API.replace('/ask', '/session/' + id))
     .then(function(r) { return r.json(); })
     .then(function(d) {
@@ -202,25 +257,25 @@ function loadSession(id) {
       });
       document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
     })
-    .catch(function() { loading.textContent = 'Failed to load session.'; });
+    .catch(function() { loading.textContent = '세션을 불러오지 못했습니다.'; });
 }
 
 function newChat() {
   sessionId = '';
   setActiveSession('');
   document.getElementById('chat').innerHTML = '';
-  addMsg('New conversation started. Ask me anything about your AWS account.', false, true);
+  addMsg('새 대화가 시작되었습니다. AWS 계정에 대해 무엇이든 물어보세요.', false, true);
   document.getElementById('q').focus();
 }
 
 function loadSessions() {
-  fetch(API.replace('/ask', '/history'))
+  fetch(API.replace('/ask', '/history') + (GRAFANA_USER ? '?user=' + encodeURIComponent(GRAFANA_USER) : ''))
     .then(function(r) { return r.json(); })
     .then(function(rows) {
       var list = document.getElementById('session-list');
       list.innerHTML = '';
       if (!rows.length) {
-        list.innerHTML = '<div style="padding:12px;font-size:11px;color:#4a5568">No sessions yet</div>';
+        list.innerHTML = '<div style="padding:12px;font-size:11px;color:#4a5568">세션이 없습니다</div>';
         return;
       }
       rows.forEach(function(s) {
@@ -234,17 +289,17 @@ function loadSessions() {
         var m = document.createElement('div');
         m.className = 's-meta';
         var sid = s.session_id;
-        m.innerHTML = '<span>' + Math.floor(s.messages / 2) + ' turns</span><span>' + escHtml(ts) + '</span>';
+        m.innerHTML = '<span>' + Math.floor(s.messages / 2) + ' 턴</span><span>' + escHtml(ts) + '</span>';
         var cb = document.createElement('button');
         cb.className = 'compact-btn';
-        cb.textContent = 'Compact';
-        cb.title = 'Summarise and compress this session\'s history';
+        cb.textContent = '압축';
+        cb.title = '이 세션의 기록을 요약하고 압축합니다';
         cb.onclick = function(e) { e.stopPropagation(); compactSession(sid, cb); };
         m.appendChild(cb);
         var db = document.createElement('button');
         db.className = 'delete-btn';
-        db.textContent = 'Del';
-        db.title = 'Delete this session';
+        db.textContent = '삭제';
+        db.title = '이 세션을 삭제합니다';
         db.onclick = function(e) { e.stopPropagation(); deleteSession(sid, el); };
         m.appendChild(db);
         el.appendChild(q);
@@ -257,62 +312,69 @@ function loadSessions() {
 }
 
 function deleteSession(sid, el) {
-  if (!confirm('Delete this session? This cannot be undone.')) return;
+  if (!confirm('이 세션을 삭제하시겠습니까? 되돌릴 수 없습니다.')) return;
   el.style.opacity = '0.4';
-  fetch(API.replace('/ask', '/session/' + sid), { method: 'DELETE' })
+  fetch(API.replace('/ask', '/session/' + sid) + (GRAFANA_USER ? '?user=' + encodeURIComponent(GRAFANA_USER) : ''), { method: 'DELETE' })
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      if (d.error) { alert('Delete failed: ' + d.error); el.style.opacity = '1'; return; }
+      if (d.error) { alert('삭제 실패: ' + d.error); el.style.opacity = '1'; return; }
       if (sid === sessionId) {
         sessionId = '';
         document.getElementById('chat').innerHTML = '';
-        addMsg('Session deleted. Start a new conversation or select one from the list.', false, false);
+        addMsg('세션이 삭제되었습니다. 새 대화를 시작하거나 목록에서 선택하세요.', false, false);
       }
       el.remove();
     })
-    .catch(function(e) { alert('Error: ' + e.message); el.style.opacity = '1'; });
+    .catch(function(e) { alert('오류: ' + e.message); el.style.opacity = '1'; });
 }
 
 function compactSession(sid, btn) {
   btn.disabled = true;
   btn.textContent = '...';
-  fetch(API.replace('/ask', '/compact/' + sid), { method: 'POST' })
+  fetch(API.replace('/ask', '/compact/' + sid) + (GRAFANA_USER ? '?user=' + encodeURIComponent(GRAFANA_USER) : ''), { method: 'POST' })
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      if (d.error) { alert('Compact failed: ' + d.error); return; }
-      btn.textContent = 'Done';
+      if (d.error) { alert('압축 실패: ' + d.error); return; }
+      btn.textContent = '완료';
       // If this is the active session, reload it
       if (sid === sessionId) loadSession(sid);
       setTimeout(function() { loadSessions(); }, 500);
     })
-    .catch(function(e) { alert('Error: ' + e.message); })
+    .catch(function(e) { alert('오류: ' + e.message); })
     .finally(function() {
-      setTimeout(function() { btn.disabled = false; btn.textContent = 'Compact'; }, 2000);
+      setTimeout(function() { btn.disabled = false; btn.textContent = '압축'; }, 2000);
     });
 }
 
-function send() {
-  var qEl = document.getElementById('q');
-  var q = qEl.value.trim();
-  if (!q) return;
-  var btn = document.getElementById('btn');
-  qEl.value = '';
-  qEl.style.height = 'auto';
-  btn.disabled = true;
-  addMsg(q, true, true);
-  var typing = addTyping();
-  var t0 = Date.now();
-  fetch(API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question: q, session_id: sessionId, model: MODEL_OVERRIDE || undefined })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(d) {
+function _handleAskResponse(d, typing, t0, isAutoQ) {
+  if (d.request_id) {
+    // Async mode: start polling
     if (d.session_id) {
       var isNew = !sessionId;
       sessionId = d.session_id;
-      if (isNew) loadSessions();
+      if (isNew || isAutoQ) loadSessions();
+      else setActiveSession(sessionId);
+    }
+    pollResult(d.request_id, typing, t0, function(result) {
+      typing.remove();
+      var text = result.status === 'error'
+        ? ('오류: ' + (result.error || '알 수 없는 오류'))
+        : (result.answer || '답변을 받지 못했습니다.');
+      var bubble = addMsg(text, false, true);
+      var sec = ((Date.now() - t0) / 1000).toFixed(1);
+      var meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = modelLabel(result.model) + ' · ' + sec + 's';
+      bubble.parentNode.appendChild(meta);
+      setStopMode(false);
+      if (result.status === 'done') loadSessions();
+    });
+  } else {
+    // Sync fallback (should not normally occur)
+    if (d.session_id) {
+      var isNew = !sessionId;
+      sessionId = d.session_id;
+      if (isNew || isAutoQ) loadSessions();
       else setActiveSession(sessionId);
     }
     typing.remove();
@@ -320,18 +382,44 @@ function send() {
     var sec = ((Date.now() - t0) / 1000).toFixed(1);
     var meta = document.createElement('div');
     meta.className = 'meta';
-    meta.textContent = sec + 's';
+    meta.textContent = modelLabel(d.model) + ' · ' + sec + 's';
     bubble.parentNode.appendChild(meta);
+    setStopMode(false);
+  }
+}
+
+function send() {
+  var qEl = document.getElementById('q');
+  var q = qEl.value.trim();
+  if (!q) return;
+  qEl.value = '';
+  qEl.style.height = 'auto';
+  addMsg(q, true, true);
+  var typing = addTyping();
+  var t0 = Date.now();
+  currentController = new AbortController();
+  setStopMode(true);
+  fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question: q, session_id: sessionId, model: MODEL_OVERRIDE || undefined, user_id: GRAFANA_USER || undefined }),
+    signal: currentController.signal
   })
+  .then(function(r) { return r.json(); })
+  .then(function(d) { _handleAskResponse(d, typing, t0, false); })
   .catch(function(e) {
     typing.remove();
-    addMsg('Error: ' + e.message, false, true);
-  })
-  .finally(function() { btn.disabled = false; });
+    if (e.name === 'AbortError') {
+      addMsg('요청이 취소되었습니다.', false, true);
+    } else {
+      addMsg('오류: ' + e.message, false, true);
+    }
+    setStopMode(false);
+  });
 }
 
 document.getElementById('q').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
     e.preventDefault();
     send();
   }
@@ -346,28 +434,29 @@ setInterval(loadSessions, 30000);
 
 var autoQ = new URLSearchParams(window.location.search).get('q');
 if (autoQ) {
-  // Opened from a Grafana data link — show question and auto-send
+  // Strip ?q= from URL so a page refresh doesn't re-send the question
+  history.replaceState({}, '', window.location.pathname);
   addMsg(autoQ, true, false);
   var typing = addTyping();
   var t0 = Date.now();
+  currentController = new AbortController();
+  setStopMode(true);
   fetch(API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question: autoQ, model: MODEL_OVERRIDE || undefined })
+    body: JSON.stringify({ question: autoQ, model: MODEL_OVERRIDE || undefined, user_id: GRAFANA_USER || undefined }),
+    signal: currentController.signal
   })
   .then(function(r) { return r.json(); })
-  .then(function(d) {
-    if (d.session_id) { sessionId = d.session_id; loadSessions(); }
+  .then(function(d) { _handleAskResponse(d, typing, t0, true); })
+  .catch(function(e) {
     typing.remove();
-    var bubble = addMsg(d.answer || d.error || JSON.stringify(d), false, true);
-    var meta = document.createElement('div');
-    meta.className = 'meta';
-    meta.textContent = ((Date.now() - t0) / 1000).toFixed(1) + 's';
-    bubble.parentNode.appendChild(meta);
-  })
-  .catch(function(e) { typing.remove(); addMsg('Error: ' + e.message, false, true); });
+    if (e.name === 'AbortError') addMsg('요청이 취소되었습니다.', false, true);
+    else addMsg('오류: ' + e.message, false, true);
+    setStopMode(false);
+  });
 } else {
-  addMsg('Hello! Select a session on the left to resume, or type to start a new one.', false, false);
+  addMsg('안녕하세요! 왼쪽에서 세션을 선택하여 이어가거나, 입력하여 새 대화를 시작하세요.', false, false);
 }
 </script>
 </body>

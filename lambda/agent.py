@@ -2,7 +2,11 @@ import json
 import boto3
 from datetime import datetime, timezone, timedelta
 
-from config import REGION, MODEL_ID, bedrock
+import re
+import time
+from config import REGION, MODEL_ID, bedrock, RDS_HOST, RDS_USER, RDS_PORT, RDS_DB, EC2_INSTANCE_ID
+
+MODEL_SONNET = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 from memory import get_facts, build_memory_prompt
 
 SYSTEM_PROMPT = """You are an AWS cloud assistant with direct access to the user's AWS account via tools.
@@ -11,12 +15,18 @@ Present results clearly with tables or bullet points. Include key details like I
 If a dedicated tool exists for the task, prefer it. If not, use the call_aws_api tool to call any read-only boto3 method directly.
 If a tool call fails, explain why and suggest what permissions might be needed.
 
+You have DIRECT database access to the RDS MySQL instance via the query_rds tool.
+For ANY question about databases, tables, schemas, rows, or data — you MUST call query_rds and return the actual results.
+NEVER write SQL in your response as an example or suggestion. NEVER tell the user to run a query themselves.
+If you are about to write a SQL code block in your answer without having called query_rds first, stop and call the tool instead.
+The user cannot run queries — only you can. Always execute and show the real data.
+
 Always format your final reply using exactly these two XML tags — they must wrap your entire reply with no text outside them:
 <thinking>
 Your internal reasoning — what data you gathered, what it means, gaps or caveats.
 </thinking>
 <response>
-Your clear, human-friendly answer. Write in plain English. Avoid repeating raw JSON. Summarise numbers concisely.
+Your clear, human-friendly answer. Always respond in Korean, even if the question contains English technical terms, product names, or mixed-language phrases. Avoid repeating raw JSON. Summarise numbers concisely.
 Do NOT use <thinking> or <response> as labels or headers inside your answer — they are only outer wrappers.
 </response>"""
 
@@ -131,6 +141,62 @@ TOOLS = [
     },
     {
         "toolSpec": {
+            "name": "query_rds",
+            "description": (
+                "Execute a read-only SQL statement (SELECT, SHOW, DESCRIBE, EXPLAIN) directly against "
+                "the RDS MySQL instance (dev-mysql-84). You are already connected — just provide the SQL. "
+                "Use this for ANY question about databases, tables, schemas, row counts, or data. "
+                "Do not ask the user to connect manually; run the query yourself."
+            ),
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "required": ["sql"],
+                    "properties": {
+                        "sql": {
+                            "type": "string",
+                            "description": "SQL statement to execute. Only SELECT, SHOW, and DESCRIBE are allowed."
+                        },
+                        "database": {
+                            "type": "string",
+                            "description": "Optional database name to use. Defaults to the configured RDS_DB."
+                        }
+                    }
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
+            "name": "run_ssm_command",
+            "description": (
+                "Run a read-only shell command on the EC2 instance via AWS SSM. "
+                "Use this to inspect logs, processes, disk/memory usage, running services, "
+                "Docker containers, or any live system state. "
+                "Only read-only commands are permitted — file writes, deletes, process kills, "
+                "package installs, and service restarts are all blocked. "
+                "Defaults to the monitoring EC2 instance unless instance_id is specified."
+            ),
+            "inputSchema": {
+                "json": {
+                    "type": "object",
+                    "required": ["command"],
+                    "properties": {
+                        "command": {
+                            "type": "string",
+                            "description": "Shell command to run, e.g. 'df -h' or 'docker ps'"
+                        },
+                        "instance_id": {
+                            "type": "string",
+                            "description": "EC2 instance ID (defaults to the monitoring instance)"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    {
+        "toolSpec": {
             "name": "call_aws_api",
             "description": (
                 "Call any boto3 AWS API method not covered by the other tools. "
@@ -165,6 +231,32 @@ TOOLS = [
             }
         }
     },
+]
+
+# Shell command patterns blocked by run_ssm_command (write / destructive ops)
+_BLOCKED_SSM_PATTERNS = [
+    r'(?<![2&])>(?!&)',          # redirect to file (allows 2>&1, blocks > file and >>)
+    r'<<',                       # heredoc — can write files via cat << EOF > path
+    r'\brm\b', r'\brmdir\b',
+    r'\bmv\b', r'\bcp\b',
+    r'\bdd\b', r'\bmkfs\b', r'\bfdisk\b', r'\bparted\b',
+    r'\bchmod\b', r'\bchown\b',
+    r'\bkill\b', r'\bpkill\b', r'\bkillall\b',
+    r'\btruncate\b', r'\bshred\b', r'\btee\b',
+    r'\bsed\s+-i\b',
+    r'\bapt\s+(install|remove|purge|upgrade|update|autoremove|dist-upgrade)\b',
+    r'\byum\s+(install|update|upgrade|remove|erase|autoremove|groupinstall|groupremove|downgrade)\b',
+    r'\bdnf\s+(install|update|upgrade|remove|erase|autoremove|groupinstall|groupremove|downgrade)\b',
+    r'\bpip[23]?\s+install\b', r'\bnpm\s+install\b',
+    r'\bsystemctl\s+(stop|restart|disable|mask|daemon-reload)\b',
+    r'\bservice\s+\S+\s+(stop|restart)\b',
+    r'\bdocker\s+(rm|rmi|stop|kill|restart|exec)\b',
+    r'\bcrontab\s+(-e|-r)\b',
+    r'\bpasswd\b', r'\buseradd\b', r'\buserdel\b', r'\busermod\b',
+    r'\bnohup\b', r'\beval\b',
+    r'\b(bash|sh|zsh|fish|ksh)\s+-c\b',  # subshell escape
+    r'\bpython[23]?\s+-c\b',             # python one-liner escape
+    r'\bperl\s+-e\b', r'\bruby\s+-e\b',  # other interpreter escapes
 ]
 
 # Methods starting with these prefixes are considered safe (read-only)
@@ -303,6 +395,43 @@ def execute_tool(tool_name: str, tool_input: dict) -> dict:
             roles = [{"RoleName": r["RoleName"], "Path": r["Path"], "CreateDate": r["CreateDate"].isoformat()} for r in resp["Roles"]]
             return {"roles": roles, "count": len(roles)}
 
+        elif tool_name == "query_rds":
+            import pymysql
+            import pymysql.cursors
+
+            sql = tool_input.get("sql", "").strip()
+            database = tool_input.get("database") or RDS_DB or None
+
+            # Read-only guard
+            first_word = sql.split()[0].upper() if sql.split() else ""
+            if first_word not in ("SELECT", "SHOW", "DESCRIBE", "DESC", "EXPLAIN"):
+                return {"error": f"Only SELECT, SHOW, DESCRIBE, and EXPLAIN statements are allowed. Got: {first_word}"}
+
+            if not RDS_HOST:
+                return {"error": "RDS_HOST is not configured."}
+
+            # Generate IAM auth token
+            rds_client = boto3.client("rds", region_name=REGION)
+            token = rds_client.generate_db_auth_token(
+                DBHostname=RDS_HOST, Port=RDS_PORT, DBUsername=RDS_USER, Region=REGION
+            )
+
+            conn = pymysql.connect(
+                host=RDS_HOST, port=RDS_PORT,
+                user=RDS_USER, password=token,
+                database=database,
+                ssl={"ssl": True},
+                connect_timeout=10,
+                cursorclass=pymysql.cursors.DictCursor,
+            )
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(sql)
+                    rows = cur.fetchmany(200)  # cap at 200 rows
+                    return {"rows": rows, "count": len(rows)}
+            finally:
+                conn.close()
+
         elif tool_name == "call_aws_api":
             service = tool_input.get("service", "").strip().lower()
             method  = tool_input.get("method",  "").strip().lower()
@@ -331,6 +460,48 @@ def execute_tool(tool_name: str, tool_input: dict) -> dict:
             result.pop("ResponseMetadata", None)
             return result
 
+        elif tool_name == "run_ssm_command":
+            command = tool_input.get("command", "").strip()
+            instance_id = tool_input.get("instance_id", "").strip() or EC2_INSTANCE_ID
+
+            if not command:
+                return {"error": "command is required."}
+
+            # Block destructive shell patterns
+            for pattern in _BLOCKED_SSM_PATTERNS:
+                if re.search(pattern, command, re.IGNORECASE):
+                    return {"error": f"Command blocked by safety policy (matched: {pattern})"}
+
+            ssm = boto3.client("ssm", region_name=REGION)
+            send_resp = ssm.send_command(
+                InstanceIds=[instance_id],
+                DocumentName="AWS-RunShellScript",
+                Parameters={"commands": [command]},
+            )
+            command_id = send_resp["Command"]["CommandId"]
+
+            # Poll for completion (up to 20 s — stay within API Gateway's 29 s hard limit)
+            for _ in range(20):
+                time.sleep(1)
+                try:
+                    inv = ssm.get_command_invocation(
+                        CommandId=command_id,
+                        InstanceId=instance_id,
+                    )
+                    status = inv["Status"]
+                    if status in ("Success", "Failed", "Cancelled", "TimedOut"):
+                        return {
+                            "status": status,
+                            "stdout": inv.get("StandardOutputContent", "").strip(),
+                            "stderr": inv.get("StandardErrorContent", "").strip(),
+                            "instance_id": instance_id,
+                            "command": command,
+                        }
+                except ssm.exceptions.InvocationDoesNotExist:
+                    continue
+
+            return {"error": "SSM command timed out waiting for result.", "command_id": command_id}
+
         else:
             return {"error": f"Unknown tool: {tool_name}"}
 
@@ -338,7 +509,7 @@ def execute_tool(tool_name: str, tool_input: dict) -> dict:
         return {"error": str(e)}
 
 
-def ask_with_tools(question: str, history: list, model: str = None) -> str:
+def ask_with_tools(question: str, history: list, model: str = None) -> tuple[str, str]:
     messages = list(history) + [{"role": "user", "content": [{"text": question}]}]
 
     facts = get_facts()
@@ -357,21 +528,31 @@ def ask_with_tools(question: str, history: list, model: str = None) -> str:
         output_message = response["output"]["message"]
         messages.append(output_message)
 
-        if stop_reason == "end_turn":
-            return next(b["text"] for b in output_message["content"] if "text" in b)
-
-        if stop_reason == "tool_use":
+        # Always resolve tool_use blocks first, regardless of stop_reason.
+        # If we skip providing tool_results when tool_use blocks are present,
+        # the next Converse call fails with a ValidationException.
+        tool_use_blocks = [b["toolUse"] for b in output_message["content"] if "toolUse" in b]
+        if tool_use_blocks:
             tool_results = []
-            for block in output_message["content"]:
-                if "toolUse" in block:
-                    tool_use = block["toolUse"]
-                    result = execute_tool(tool_use["name"], tool_use.get("input", {}))
-                    tool_results.append({
-                        "toolResult": {
-                            "toolUseId": tool_use["toolUseId"],
-                            "content": [{"text": json.dumps(result, default=str)}],
-                        }
-                    })
+            for tool_use in tool_use_blocks:
+                result = execute_tool(tool_use["name"], tool_use.get("input", {}))
+                if tool_use["name"] == "query_rds":
+                    model_id = MODEL_SONNET
+                tool_results.append({
+                    "toolResult": {
+                        "toolUseId": tool_use["toolUseId"],
+                        "content": [{"text": json.dumps(result, default=str)}],
+                    }
+                })
             messages.append({"role": "user", "content": tool_results})
+            continue
 
-    return "Reached maximum tool call iterations without a final answer."
+        if stop_reason == "end_turn":
+            text = next((b["text"] for b in output_message["content"] if "text" in b), "")
+            return text, model_id
+
+        # Any other stop_reason (max_tokens, stop_sequence, etc.) — return whatever text we have
+        text = " ".join(b["text"] for b in output_message["content"] if "text" in b)
+        return text, model_id
+
+    return "최대 반복 횟수에 도달하여 최종 답변을 생성하지 못했습니다.", model_id

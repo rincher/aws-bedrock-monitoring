@@ -1,8 +1,59 @@
 import json
 import boto3
+from boto3.dynamodb.conditions import Attr
 from datetime import datetime, timezone
 
 from config import REGION, SESSION_TABLE, SESSION_BUCKET, SESSION_PREFIX, MODEL_ID, bedrock
+
+_REQ_PREFIX = "_req_"
+
+
+# ── Async request tracking ────────────────────────────────────────────────────
+
+def save_async_request(request_id: str, question: str, session_id: str, user_id: str, model: str) -> None:
+    ddb = boto3.resource("dynamodb", region_name=REGION)
+    ddb.Table(SESSION_TABLE).put_item(Item={
+        "session_id":     f"{_REQ_PREFIX}{request_id}",
+        "status":         "pending",
+        "question":       question,
+        "req_session_id": session_id,
+        "user_id":        user_id or "",
+        "model":          model or "",
+        "updated_at":     datetime.now(timezone.utc).isoformat(),
+    })
+
+
+def complete_async_request(request_id: str, answer: str, model: str) -> None:
+    ddb = boto3.resource("dynamodb", region_name=REGION)
+    ddb.Table(SESSION_TABLE).update_item(
+        Key={"session_id": f"{_REQ_PREFIX}{request_id}"},
+        UpdateExpression="SET #s=:s, answer=:a, model=:m, updated_at=:t",
+        ExpressionAttributeNames={"#s": "status"},
+        ExpressionAttributeValues={
+            ":s": "done", ":a": answer, ":m": model,
+            ":t": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+
+
+def fail_async_request(request_id: str, error: str) -> None:
+    ddb = boto3.resource("dynamodb", region_name=REGION)
+    ddb.Table(SESSION_TABLE).update_item(
+        Key={"session_id": f"{_REQ_PREFIX}{request_id}"},
+        UpdateExpression="SET #s=:s, #e=:e, updated_at=:t",
+        ExpressionAttributeNames={"#s": "status", "#e": "error"},
+        ExpressionAttributeValues={
+            ":s": "error", ":e": error,
+            ":t": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+
+
+def get_async_request(request_id: str) -> dict:
+    ddb = boto3.resource("dynamodb", region_name=REGION)
+    return ddb.Table(SESSION_TABLE).get_item(
+        Key={"session_id": f"{_REQ_PREFIX}{request_id}"}
+    ).get("Item") or {}
 
 # In-process cache to avoid redundant DynamoDB reads within the same container
 _cache: dict = {}
@@ -29,15 +80,18 @@ def _load_history(session_id: str) -> list:
     return history
 
 
-def _save_history(session_id: str, history: list) -> None:
+def _save_history(session_id: str, history: list, user_id: str = "") -> None:
     _cache[session_id] = list(history)
     try:
         ddb = boto3.resource("dynamodb", region_name=REGION)
-        ddb.Table(SESSION_TABLE).put_item(Item={
+        item = {
             "session_id": session_id,
             "history": json.dumps(history, ensure_ascii=False),
             "updated_at": datetime.now(timezone.utc).isoformat(),
-        })
+        }
+        if user_id:
+            item["user_id"] = user_id
+        ddb.Table(SESSION_TABLE).put_item(Item=item)
         return
     except Exception:
         pass
@@ -66,14 +120,20 @@ def session_handler(session_id: str) -> dict:
         return api_response(500, {"error": str(e)})
 
 
-def history_handler() -> dict:
+def history_handler(user_id: str = "") -> dict:
     from lambda_function import api_response
     try:
         ddb = boto3.resource("dynamodb", region_name=REGION)
-        result = ddb.Table(SESSION_TABLE).scan(
-            ProjectionExpression="session_id, updated_at, history",
-            Limit=100,
-        )
+        kwargs = {
+            "ProjectionExpression": "session_id, updated_at, history, user_id",
+            "Limit": 100,
+        }
+        # Exclude async request tracking records (no history field)
+        f = Attr("history").exists()
+        if user_id:
+            f = f & Attr("user_id").eq(user_id)
+        kwargs["FilterExpression"] = f
+        result = ddb.Table(SESSION_TABLE).scan(**kwargs)
         rows = []
         for item in result.get("Items", []):
             try:
@@ -94,7 +154,7 @@ def history_handler() -> dict:
         return api_response(500, {"error": str(e)})
 
 
-def delete_handler(session_id: str) -> dict:
+def delete_handler(session_id: str, user_id: str = "") -> dict:  # noqa: ARG001
     from lambda_function import api_response
     try:
         _cache.pop(session_id, None)
@@ -113,7 +173,7 @@ def delete_handler(session_id: str) -> dict:
         return api_response(500, {"error": str(e)})
 
 
-def compact_handler(session_id: str) -> dict:
+def compact_handler(session_id: str, user_id: str = "") -> dict:  # noqa: ARG001
     from lambda_function import api_response
     try:
         history = _load_history(session_id)
