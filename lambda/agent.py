@@ -509,6 +509,25 @@ def execute_tool(tool_name: str, tool_input: dict) -> dict:
         return {"error": str(e)}
 
 
+_FORCE_TOOL_RE = re.compile(
+    r'\b(ec2|rds|s3|lambda|ecs|eks|iam|vpc|subnet|'
+    r'cpu|memory|ram|disk|network|iops|latency|cloudwatch|metric|'
+    r'instance|bucket|function|cluster|role|policy|'
+    r'cost|price|billing|ssm|process|log|docker|uptime|'
+    r'select|show\s+tables|describe|explain|table|column|database|sql)\b'
+    r'|(?:인스턴스|버킷|함수|클러스터|비용|프로세스|로그|목록|'
+    r'사용률|사용량|메트릭|모니터링|조회|확인해줘|테이블|데이터베이스|'
+    r'접속|실행중|실행해|서버)',
+    re.IGNORECASE,
+)
+
+_ANALYSIS_RE = re.compile(
+    r'\b(why|explain|analy[sz]e|diagnose|root\s*cause|troubleshoot|recommend)\b'
+    r'|(?:왜|이유|원인|분석|설명|진단|해결)',
+    re.IGNORECASE,
+)
+
+
 def ask_with_tools(question: str, history: list, model: str = None) -> tuple[str, str]:
     messages = list(history) + [{"role": "user", "content": [{"text": question}]}]
 
@@ -516,27 +535,31 @@ def ask_with_tools(question: str, history: list, model: str = None) -> tuple[str
     system_text = SYSTEM_PROMPT + build_memory_prompt(facts)
     model_id = model or MODEL_ID
 
-    for _ in range(10):
+    force_tool    = not model and bool(_FORCE_TOOL_RE.search(question or ""))
+    upgrade_synth = not model and bool(_ANALYSIS_RE.search(question or ""))
+
+    for turn in range(10):
+        tool_config = {"tools": TOOLS}
+        if force_tool and turn == 0:
+            tool_config["toolChoice"] = {"any": {}}
+
         response = bedrock.converse(
             modelId=model_id,
             system=[{"text": system_text}],
             messages=messages,
-            toolConfig={"tools": TOOLS},
+            toolConfig=tool_config,
         )
 
         stop_reason = response["stopReason"]
         output_message = response["output"]["message"]
         messages.append(output_message)
 
-        # Always resolve tool_use blocks first, regardless of stop_reason.
-        # If we skip providing tool_results when tool_use blocks are present,
-        # the next Converse call fails with a ValidationException.
         tool_use_blocks = [b["toolUse"] for b in output_message["content"] if "toolUse" in b]
         if tool_use_blocks:
             tool_results = []
             for tool_use in tool_use_blocks:
                 result = execute_tool(tool_use["name"], tool_use.get("input", {}))
-                if tool_use["name"] == "query_rds":
+                if tool_use["name"] == "query_rds" or upgrade_synth:
                     model_id = MODEL_SONNET
                 tool_results.append({
                     "toolResult": {

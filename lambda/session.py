@@ -1,111 +1,57 @@
 import json
 import boto3
-from boto3.dynamodb.conditions import Attr
 from datetime import datetime, timezone
 
-from config import REGION, SESSION_TABLE, SESSION_BUCKET, SESSION_PREFIX, MODEL_ID, bedrock
+from config import REGION, SESSION_BUCKET, SESSION_PREFIX, MODEL_ID, bedrock
 
-_REQ_PREFIX = "_req_"
-
-
-# ── Async request tracking ────────────────────────────────────────────────────
-
-def save_async_request(request_id: str, question: str, session_id: str, user_id: str, model: str) -> None:
-    ddb = boto3.resource("dynamodb", region_name=REGION)
-    ddb.Table(SESSION_TABLE).put_item(Item={
-        "session_id":     f"{_REQ_PREFIX}{request_id}",
-        "status":         "pending",
-        "question":       question,
-        "req_session_id": session_id,
-        "user_id":        user_id or "",
-        "model":          model or "",
-        "updated_at":     datetime.now(timezone.utc).isoformat(),
-    })
-
-
-def complete_async_request(request_id: str, answer: str, model: str) -> None:
-    ddb = boto3.resource("dynamodb", region_name=REGION)
-    ddb.Table(SESSION_TABLE).update_item(
-        Key={"session_id": f"{_REQ_PREFIX}{request_id}"},
-        UpdateExpression="SET #s=:s, answer=:a, model=:m, updated_at=:t",
-        ExpressionAttributeNames={"#s": "status"},
-        ExpressionAttributeValues={
-            ":s": "done", ":a": answer, ":m": model,
-            ":t": datetime.now(timezone.utc).isoformat(),
-        },
-    )
-
-
-def fail_async_request(request_id: str, error: str) -> None:
-    ddb = boto3.resource("dynamodb", region_name=REGION)
-    ddb.Table(SESSION_TABLE).update_item(
-        Key={"session_id": f"{_REQ_PREFIX}{request_id}"},
-        UpdateExpression="SET #s=:s, #e=:e, updated_at=:t",
-        ExpressionAttributeNames={"#s": "status", "#e": "error"},
-        ExpressionAttributeValues={
-            ":s": "error", ":e": error,
-            ":t": datetime.now(timezone.utc).isoformat(),
-        },
-    )
-
-
-def get_async_request(request_id: str) -> dict:
-    ddb = boto3.resource("dynamodb", region_name=REGION)
-    return ddb.Table(SESSION_TABLE).get_item(
-        Key={"session_id": f"{_REQ_PREFIX}{request_id}"}
-    ).get("Item") or {}
-
-# In-process cache to avoid redundant DynamoDB reads within the same container
+# ── In-process cache ──────────────────────────────────────────────────────────
 _cache: dict = {}
+
+# ── S3 helpers ────────────────────────────────────────────────────────────────
+
+def _s3():
+    return boto3.client("s3", region_name=REGION)
+
+
+def _key(session_id: str) -> str:
+    return f"{SESSION_PREFIX}{session_id}.json"
 
 
 def _load_history(session_id: str) -> list:
     if session_id in _cache:
         return list(_cache[session_id])
     history = []
-    try:
-        ddb = boto3.resource("dynamodb", region_name=REGION)
-        item = ddb.Table(SESSION_TABLE).get_item(Key={"session_id": session_id}).get("Item")
-        if item:
-            history = json.loads(item["history"])
-    except Exception:
-        if SESSION_BUCKET:
-            try:
-                s3 = boto3.client("s3")
-                obj = s3.get_object(Bucket=SESSION_BUCKET, Key=f"{SESSION_PREFIX}{session_id}.json")
-                history = json.loads(obj["Body"].read())
-            except Exception:
-                pass
+    if SESSION_BUCKET:
+        try:
+            obj = _s3().get_object(Bucket=SESSION_BUCKET, Key=_key(session_id))
+            history = json.loads(obj["Body"].read())
+        except Exception:
+            pass
     _cache[session_id] = list(history)
     return history
 
 
 def _save_history(session_id: str, history: list, user_id: str = "") -> None:
     _cache[session_id] = list(history)
-    try:
-        ddb = boto3.resource("dynamodb", region_name=REGION)
-        item = {
-            "session_id": session_id,
-            "history": json.dumps(history, ensure_ascii=False),
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
-        if user_id:
-            item["user_id"] = user_id
-        ddb.Table(SESSION_TABLE).put_item(Item=item)
+    if not SESSION_BUCKET:
         return
-    except Exception:
-        pass
-    if SESSION_BUCKET:
-        try:
-            boto3.client("s3").put_object(
-                Bucket=SESSION_BUCKET,
-                Key=f"{SESSION_PREFIX}{session_id}.json",
-                Body=json.dumps(history, ensure_ascii=False),
-                ContentType="application/json",
-            )
-        except Exception:
-            pass
+    user_turns = [m for m in history if m["role"] == "user"]
+    first_q    = user_turns[0]["content"][0]["text"][:80] if user_turns else ""
+    _s3().put_object(
+        Bucket      = SESSION_BUCKET,
+        Key         = _key(session_id),
+        Body        = json.dumps(history, ensure_ascii=False).encode(),
+        ContentType = "application/json",
+        Metadata    = {
+            "user-id":        user_id or "",
+            "updated-at":     datetime.now(timezone.utc).isoformat(),
+            "first-question": first_q,
+            "message-count":  str(len(history)),
+        },
+    )
 
+
+# ── Public endpoint handlers ──────────────────────────────────────────────────
 
 def session_handler(session_id: str) -> dict:
     from lambda_function import api_response
@@ -122,34 +68,32 @@ def session_handler(session_id: str) -> dict:
 
 def history_handler(user_id: str = "") -> dict:
     from lambda_function import api_response
+    if not SESSION_BUCKET:
+        return api_response(500, {"error": "SESSION_BUCKET not configured"})
     try:
-        ddb = boto3.resource("dynamodb", region_name=REGION)
-        kwargs = {
-            "ProjectionExpression": "session_id, updated_at, history, user_id",
-            "Limit": 100,
-        }
-        # Exclude async request tracking records (no history field)
-        f = Attr("history").exists()
-        if user_id:
-            f = f & Attr("user_id").eq(user_id)
-        kwargs["FilterExpression"] = f
-        result = ddb.Table(SESSION_TABLE).scan(**kwargs)
-        rows = []
-        for item in result.get("Items", []):
-            try:
-                hist = json.loads(item.get("history", "[]"))
-                user_turns = [m for m in hist if m["role"] == "user"]
-                first_q = user_turns[0]["content"][0]["text"][:80] if user_turns else "(empty)"
-                rows.append({
-                    "session_id": item["session_id"],
-                    "first_question": first_q,
-                    "messages": len(hist),
-                    "last_active": item.get("updated_at", ""),
-                })
-            except Exception:
-                continue
+        s3     = _s3()
+        paginator = s3.get_paginator("list_objects_v2")
+        rows   = []
+        for page in paginator.paginate(Bucket=SESSION_BUCKET, Prefix=SESSION_PREFIX):
+            for obj in page.get("Contents", []):
+                key = obj["Key"]
+                if not key.endswith(".json"):
+                    continue
+                try:
+                    meta = s3.head_object(Bucket=SESSION_BUCKET, Key=key)["Metadata"]
+                    if user_id and meta.get("user-id", "") != user_id:
+                        continue
+                    session_id = key[len(SESSION_PREFIX):].rstrip(".json").lstrip("/").replace(".json", "")
+                    rows.append({
+                        "session_id":     session_id,
+                        "first_question": meta.get("first-question", "(empty)"),
+                        "messages":       int(meta.get("message-count", "0")),
+                        "last_active":    meta.get("updated-at", ""),
+                    })
+                except Exception:
+                    continue
         rows.sort(key=lambda x: x["last_active"], reverse=True)
-        return api_response(200, rows)
+        return api_response(200, rows[:100])
     except Exception as e:
         return api_response(500, {"error": str(e)})
 
@@ -158,16 +102,8 @@ def delete_handler(session_id: str, user_id: str = "") -> dict:  # noqa: ARG001
     from lambda_function import api_response
     try:
         _cache.pop(session_id, None)
-        ddb = boto3.resource("dynamodb", region_name=REGION)
-        ddb.Table(SESSION_TABLE).delete_item(Key={"session_id": session_id})
         if SESSION_BUCKET:
-            try:
-                boto3.client("s3").delete_object(
-                    Bucket=SESSION_BUCKET,
-                    Key=f"{SESSION_PREFIX}{session_id}.json",
-                )
-            except Exception:
-                pass
+            _s3().delete_object(Bucket=SESSION_BUCKET, Key=_key(session_id))
         return api_response(200, {"message": "Deleted", "session_id": session_id})
     except Exception as e:
         return api_response(500, {"error": str(e)})
@@ -202,13 +138,13 @@ def compact_handler(session_id: str, user_id: str = "") -> dict:  # noqa: ARG001
             {"role": "user",      "content": [{"text": "[Conversation summary] " + summary}]},
             {"role": "assistant", "content": [{"text": "Got it. I have the context from our previous conversation. How can I help?"}]},
         ]
-        _save_history(session_id, new_history)
+        _save_history(session_id, new_history, user_id)
 
         return api_response(200, {
-            "message": "Compacted",
-            "summary": summary,
+            "message":        "Compacted",
+            "summary":        summary,
             "original_turns": len(history),
-            "new_turns": len(new_history),
+            "new_turns":      len(new_history),
         })
     except Exception as e:
         return api_response(500, {"error": str(e)})

@@ -55,7 +55,7 @@
           "links": [
             {
               "title": "Bedrock AI에게 질문",
-              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 CPU 사용률이 ${__data.fields[0]} 시점에 ${__value.text}입니다. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=CPUUtilization, InstanceId=${instance_id}. 이 수치가 정상인가요? 원인이 무엇일 수 있나요?",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 CPU 사용률이 ${__data.fields[0]} 시점에 ${__value.text}입니다. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=CPUUtilization, InstanceId=${instance_id}. 이 수치가 정상인가요? 원인이 무엇일 수 있나요?",
               "targetBlank": true
             }
           ]
@@ -101,7 +101,7 @@
       "links": [
         {
           "title": "이 차트에 대해 Bedrock AI에게 질문",
-          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 CPU 사용률 추이를 분석해 주세요. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=CPUUtilization, InstanceId=${instance_id}. 패턴이 정상인가요? 급등하거나 지속적으로 높은 사용률이 있나요?",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 CPU 사용률 추이를 분석해 주세요. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=CPUUtilization, InstanceId=${instance_id}. 패턴이 정상인가요? 급등하거나 지속적으로 높은 사용률이 있나요?",
           "targetBlank": true
         }
       ]
@@ -125,7 +125,7 @@
           "links": [
             {
               "title": "Bedrock AI에게 질문",
-              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 ${__data.fields[0]} 시점 ${__series.name}이 ${__value.text}입니다. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=NetworkIn 및 NetworkOut, InstanceId=${instance_id}. 이 트래픽 수준이 정상인가요?",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 ${__data.fields[0]} 시점 ${__series.name}이 ${__value.text}입니다. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=NetworkIn 및 NetworkOut, InstanceId=${instance_id}. 이 트래픽 수준이 정상인가요?",
               "targetBlank": true
             }
           ]
@@ -187,7 +187,7 @@
       "links": [
         {
           "title": "이 차트에 대해 Bedrock AI에게 질문",
-          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 네트워크 트래픽(수신/송신)을 분석해 주세요. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=NetworkIn 및 NetworkOut, InstanceId=${instance_id}. 이상 징후나 예상치 못한 트래픽 패턴이 있나요?",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 네트워크 트래픽(수신/송신)을 분석해 주세요. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=NetworkIn 및 NetworkOut, InstanceId=${instance_id}. 이상 징후나 예상치 못한 트래픽 패턴이 있나요?",
           "targetBlank": true
         }
       ]
@@ -211,7 +211,7 @@
           "links": [
             {
               "title": "Bedrock AI에게 질문",
-              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 ${__data.fields[0]} 시점 ${__series.name}이 ${__value.text}입니다. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=DiskReadOps 및 DiskWriteOps, InstanceId=${instance_id}. 이 디스크 I/O가 정상인가요?",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 ${__data.fields[0]} 시점 ${__series.name}이 ${__value.text}입니다. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=DiskReadOps 및 DiskWriteOps, InstanceId=${instance_id}. 이 디스크 I/O가 정상인가요?",
               "targetBlank": true
             }
           ]
@@ -273,7 +273,7 @@
       "links": [
         {
           "title": "이 차트에 대해 Bedrock AI에게 질문",
-          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 디스크 읽기/쓰기 IOPS를 분석해 주세요. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=DiskReadOps 및 DiskWriteOps, InstanceId=${instance_id}. 이 I/O 패턴이 워크로드에 적합한가요?",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 디스크 읽기/쓰기 IOPS를 분석해 주세요. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=DiskReadOps 및 DiskWriteOps, InstanceId=${instance_id}. 이 I/O 패턴이 워크로드에 적합한가요?",
           "targetBlank": true
         }
       ]
@@ -312,7 +312,7 @@
           "links": [
             {
               "title": "Bedrock AI에게 질문",
-              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 현재 CPU 사용률이 ${__value.text}입니다. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=CPUUtilization, InstanceId=${instance_id}. 우려할 수준인가요? 어떻게 조치하면 좋을까요?",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 현재 CPU 사용률이 ${__value.text}입니다. CloudWatch 메트릭: namespace=AWS/EC2, MetricName=CPUUtilization, InstanceId=${instance_id}. 우려할 수준인가요? 어떻게 조치하면 좋을까요?",
               "targetBlank": true
             }
           ]
@@ -363,7 +363,7 @@
       "links": [
         {
           "title": "이 차트에 대해 Bedrock AI에게 질문",
-          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 현재 CPU 사용률은 얼마인가요? CloudWatch 메트릭: namespace=AWS/EC2, MetricName=CPUUtilization, InstanceId=${instance_id}. 이 수준이 우려스러운가요?",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 현재 CPU 사용률은 얼마인가요? CloudWatch 메트릭: namespace=AWS/EC2, MetricName=CPUUtilization, InstanceId=${instance_id}. 이 수준이 우려스러운가요?",
           "targetBlank": true
         }
       ]
@@ -399,7 +399,7 @@
           "links": [
             {
               "title": "Bedrock AI에게 질문",
-              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=Lambda 함수 bedrock-qa가 ${__data.fields[0]} 시점에 ${__value.text}번 호출되었습니다. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=Invocations, FunctionName=bedrock-qa. 이 트래픽 수준이 정상인가요?",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=Lambda 함수 bedrock-qa가 ${__data.fields[0]} 시점에 ${__value.text}번 호출되었습니다. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=Invocations, FunctionName=bedrock-qa. 이 트래픽 수준이 정상인가요?",
               "targetBlank": true
             }
           ]
@@ -440,7 +440,7 @@
       "links": [
         {
           "title": "이 차트에 대해 Bedrock AI에게 질문",
-          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Lambda 함수 bedrock-qa의 호출 추이를 분석해 주세요. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=Invocations, FunctionName=bedrock-qa. 호출 횟수에 이상한 급등이나 감소가 있나요?",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Lambda 함수 bedrock-qa의 호출 추이를 분석해 주세요. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=Invocations, FunctionName=bedrock-qa. 호출 횟수에 이상한 급등이나 감소가 있나요?",
           "targetBlank": true
         }
       ]
@@ -464,7 +464,7 @@
           "links": [
             {
               "title": "Bedrock AI에게 질문",
-              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=Lambda 함수 bedrock-qa의 ${__data.fields[0]} 시점 ${__series.name} 실행 시간이 ${__value.text}입니다. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=Duration, FunctionName=bedrock-qa. 이 성능이 적절한가요?",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=Lambda 함수 bedrock-qa의 ${__data.fields[0]} 시점 ${__series.name} 실행 시간이 ${__value.text}입니다. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=Duration, FunctionName=bedrock-qa. 이 성능이 적절한가요?",
               "targetBlank": true
             }
           ]
@@ -526,7 +526,7 @@
       "links": [
         {
           "title": "이 차트에 대해 Bedrock AI에게 질문",
-          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Lambda 함수 bedrock-qa의 실행 시간(평균 및 p95)을 분석해 주세요. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=Duration, FunctionName=bedrock-qa. 성능이 정상인가요? 레이턴시 증가가 있나요?",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Lambda 함수 bedrock-qa의 실행 시간(평균 및 p95)을 분석해 주세요. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=Duration, FunctionName=bedrock-qa. 성능이 정상인가요? 레이턴시 증가가 있나요?",
           "targetBlank": true
         }
       ]
@@ -550,7 +550,7 @@
           "links": [
             {
               "title": "Bedrock AI에게 질문",
-              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=Lambda 함수 bedrock-qa에서 ${__data.fields[0]} 시점에 ${__series.name} ${__value.text}이 발생했습니다. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=Errors 및 Throttles, FunctionName=bedrock-qa. 원인이 무엇이며 어떻게 조사해야 하나요?",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=Lambda 함수 bedrock-qa에서 ${__data.fields[0]} 시점에 ${__series.name} ${__value.text}이 발생했습니다. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=Errors 및 Throttles, FunctionName=bedrock-qa. 원인이 무엇이며 어떻게 조사해야 하나요?",
               "targetBlank": true
             }
           ]
@@ -644,7 +644,7 @@
       "links": [
         {
           "title": "이 차트에 대해 Bedrock AI에게 질문",
-          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Lambda 함수 bedrock-qa의 오류 및 스로틀링을 분석해 주세요. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=Errors 및 Throttles, FunctionName=bedrock-qa. 원인이 무엇이며 어떻게 해결해야 하나요?",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Lambda 함수 bedrock-qa의 오류 및 스로틀링을 분석해 주세요. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=Errors 및 Throttles, FunctionName=bedrock-qa. 원인이 무엇이며 어떻게 해결해야 하나요?",
           "targetBlank": true
         }
       ]
@@ -668,7 +668,7 @@
           "links": [
             {
               "title": "Bedrock AI에게 질문",
-              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=Lambda 함수 bedrock-qa가 ${__data.fields[0]} 시점에 동시 실행 수 ${__value.text}를 기록했습니다. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=ConcurrentExecutions, FunctionName=bedrock-qa. 동시 실행 한도를 주의해야 하나요?",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=Lambda 함수 bedrock-qa가 ${__data.fields[0]} 시점에 동시 실행 수 ${__value.text}를 기록했습니다. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=ConcurrentExecutions, FunctionName=bedrock-qa. 동시 실행 한도를 주의해야 하나요?",
               "targetBlank": true
             }
           ]
@@ -709,7 +709,7 @@
       "links": [
         {
           "title": "이 차트에 대해 Bedrock AI에게 질문",
-          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Lambda 함수 bedrock-qa의 동시 실행 수 추이를 분석해 주세요. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=ConcurrentExecutions, FunctionName=bedrock-qa. 동시 실행 한도에 근접하고 있나요?",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=Lambda 함수 bedrock-qa의 동시 실행 수 추이를 분석해 주세요. CloudWatch 메트릭: namespace=AWS/Lambda, MetricName=ConcurrentExecutions, FunctionName=bedrock-qa. 동시 실행 한도에 근접하고 있나요?",
           "targetBlank": true
         }
       ]
@@ -763,7 +763,7 @@
           "links": [
             {
               "title": "Bedrock AI에게 질문",
-              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 ${__data.fields[0]} 시점 메모리 사용률이 ${__value.text}입니다. CloudWatch 메트릭: namespace=CWAgent, MetricName=mem_used_percent, InstanceId=${instance_id}. 우려스러운 수준인가요? 무엇이 메모리를 소비하고 있을까요?",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 ${__data.fields[0]} 시점 메모리 사용률이 ${__value.text}입니다. CloudWatch 메트릭: namespace=CWAgent, MetricName=mem_used_percent, InstanceId=${instance_id}. 우려스러운 수준인가요? 무엇이 메모리를 소비하고 있을까요?",
               "targetBlank": true
             }
           ]
@@ -804,7 +804,7 @@
       "links": [
         {
           "title": "이 차트에 대해 Bedrock AI에게 질문",
-          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 메모리 사용률을 분석해 주세요. CloudWatch 메트릭: namespace=CWAgent, MetricName=mem_used_percent, InstanceId=${instance_id}. 메모리 압박이나 누수 가능성이 있나요?",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 메모리 사용률을 분석해 주세요. CloudWatch 메트릭: namespace=CWAgent, MetricName=mem_used_percent, InstanceId=${instance_id}. 메모리 압박이나 누수 가능성이 있나요?",
           "targetBlank": true
         }
       ]
@@ -846,7 +846,7 @@
           "links": [
             {
               "title": "Bedrock AI에게 질문",
-              "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 ${__data.fields[0]} 시점 루트(/) 디스크 사용률이 ${__value.text}입니다. CloudWatch 메트릭: namespace=CWAgent, MetricName=disk_used_percent, path=/, InstanceId=${instance_id}. 우려할 수준인가요? 무엇을 정리해야 할까요?",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 ${__data.fields[0]} 시점 루트(/) 디스크 사용률이 ${__value.text}입니다. CloudWatch 메트릭: namespace=CWAgent, MetricName=disk_used_percent, path=/, InstanceId=${instance_id}. 우려할 수준인가요? 무엇을 정리해야 할까요?",
               "targetBlank": true
             }
           ]
@@ -890,7 +890,7 @@
       "links": [
         {
           "title": "이 차트에 대해 Bedrock AI에게 질문",
-          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 루트(/) 디스크 사용률을 분석해 주세요. CloudWatch 메트릭: namespace=CWAgent, MetricName=disk_used_percent, path=/, InstanceId=${instance_id}. 곧 디스크 공간이 부족해질 위험이 있나요?",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 루트(/) 디스크 사용률을 분석해 주세요. CloudWatch 메트릭: namespace=CWAgent, MetricName=disk_used_percent, path=/, InstanceId=${instance_id}. 곧 디스크 공간이 부족해질 위험이 있나요?",
           "targetBlank": true
         }
       ]
@@ -973,7 +973,7 @@
       "links": [
         {
           "title": "이 차트에 대해 Bedrock AI에게 질문",
-          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 현재 메모리 사용률은 얼마인가요? CloudWatch 메트릭: namespace=CWAgent, MetricName=mem_used_percent, InstanceId=${instance_id}. 이 수준이 우려스러운가요?",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 현재 메모리 사용률은 얼마인가요? CloudWatch 메트릭: namespace=CWAgent, MetricName=mem_used_percent, InstanceId=${instance_id}. 이 수준이 우려스러운가요?",
           "targetBlank": true
         }
       ]
@@ -1059,7 +1059,7 @@
       "links": [
         {
           "title": "이 차트에 대해 Bedrock AI에게 질문",
-          "url": "https://grafana.hyundong.shop/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 현재 루트(/) 디스크 사용률은 얼마인가요? CloudWatch 메트릭: namespace=CWAgent, MetricName=disk_used_percent, path=/, InstanceId=${instance_id}. 디스크 공간이 부족해지고 있나요?",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=EC2 인스턴스 ${instance_id}의 현재 루트(/) 디스크 사용률은 얼마인가요? CloudWatch 메트릭: namespace=CWAgent, MetricName=disk_used_percent, path=/, InstanceId=${instance_id}. 디스크 공간이 부족해지고 있나요?",
           "targetBlank": true
         }
       ]

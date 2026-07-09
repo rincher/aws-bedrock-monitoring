@@ -7,5 +7,5 @@ contactPoints:
       - uid: bedrock-webhook
         type: webhook
         settings:
-          url: https://YOUR_API_GATEWAY_ID.execute-api.ap-northeast-2.amazonaws.com/prod/webhook
+          url: https://__API_GATEWAY_HOST__/prod/webhook
           httpMethod: POST

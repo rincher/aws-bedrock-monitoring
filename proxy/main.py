@@ -45,12 +45,15 @@ def _invoke_lambda(method: str, path: str, body=None, qs: dict = None):
 
 
 def _invoke_agentcore(session_id: str, payload: dict) -> dict:
+    sid = session_id or "default"
+    if len(sid) < 33:
+        sid = (sid + "-" + "0" * 33)[:33]
     resp = _agentcore.invoke_agent_runtime(
         agentRuntimeArn=RUNTIME_ARN,
-        runtimeSessionId=session_id or "default",
+        runtimeSessionId=sid,
         payload=json.dumps(payload).encode(),
     )
-    body = resp.get("body")
+    body = resp.get("response") or resp.get("body")
     if hasattr(body, "read"):
         body = body.read()
     return json.loads(body) if body else {}
@@ -62,6 +65,7 @@ def health():
 
 
 @app.post("/ask")
+@app.post("/bedrock/ask")
 async def ask(request: Request):
     body = await request.json()
     session_id = body.get("session_id", "")

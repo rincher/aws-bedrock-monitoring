@@ -49,3 +49,6 @@ prometheus-storage/
 *.xlsx
 !.env.example
 .aws-sam/
+
+# Ad-hoc edit backups
+lambda/backup_*/

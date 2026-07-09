@@ -14,16 +14,14 @@ import time
 import sys
 import os
 
-PROFILE      = "sandbox"
-REGION       = "ap-northeast-2"
-ECR_REPO     = "bedrock-agent-runtime"
-ACCOUNT_ID   = "009215122583"
-IMAGE_URI    = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/{ECR_REPO}:latest"
-
-# VPC config — same VPC as the existing EC2/Lambda setup
-VPC_ID       = "vpc-026fd1b8e1c666ae2"
+PROFILE      = os.getenv("AWS_PROFILE", "sandbox")
+REGION       = os.getenv("AWS_REGION", "ap-northeast-2")
+ECR_REPO     = os.getenv("ECR_REPO", "bedrock-agent-runtime")
+VPC_ID       = os.getenv("VPC_ID", "")
 
 session  = boto3.Session(profile_name=PROFILE, region_name=REGION)
+ACCOUNT_ID   = session.client("sts").get_caller_identity()["Account"]
+IMAGE_URI    = f"{ACCOUNT_ID}.dkr.ecr.{REGION}.amazonaws.com/{ECR_REPO}:latest"
 control  = session.client("bedrock-agentcore-control")
 ecr      = session.client("ecr")
 ec2      = session.client("ec2")

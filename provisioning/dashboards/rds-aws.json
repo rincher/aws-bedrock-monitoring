@@ -1,0 +1,797 @@
+{
+  "__inputs": [],
+  "__requires": [
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "9.0.0"
+    },
+    {
+      "type": "datasource",
+      "id": "cloudwatch",
+      "name": "CloudWatch",
+      "version": "1.0.0"
+    }
+  ],
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 100,
+      "title": "RDS — Metrics",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          },
+          "links": [
+            {
+              "title": "Bedrock AI에게 질문",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=RDS 인스턴스 ${db_id}의 ${__data.fields[0]} 시점 CPU 사용률이 ${__value.text}입니다. CloudWatch 메트릭: namespace=AWS/RDS, MetricName=CPUUtilization, DBInstanceIdentifier=${db_id}. 이 수치가 정상인가요? 원인이 무엇일 수 있나요?",
+              "targetBlank": true
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "id": 1,
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0,
+          "metricName": "CPUUtilization",
+          "namespace": "AWS/RDS",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Average"
+        }
+      ],
+      "title": "RDS CPU Utilization",
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "이 차트에 대해 Bedrock AI에게 질문",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=RDS 인스턴스 ${db_id}의 CPU 사용률 추이를 분석해 주세요. CloudWatch 메트릭: namespace=AWS/RDS, MetricName=CPUUtilization, DBInstanceIdentifier=${db_id}. 패턴이 정상인가요? 급등하거나 지속적으로 높은 사용률이 있나요?",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10
+          },
+          "unit": "bytes",
+          "min": 0,
+          "links": [
+            {
+              "title": "Bedrock AI에게 질문",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=now-6h&to=now&timezone=browser&var-q=RDS 인스턴스 ${db_id}의 ${__data.fields[0]} 시점 가용 메모리(FreeableMemory)가 ${__value.text}입니다. CloudWatch 메트릭: namespace=AWS/RDS, MetricName=FreeableMemory, DBInstanceIdentifier=${db_id}. 메모리 압박이 있나요? SwapUsage도 함께 확인이 필요한가요?",
+              "targetBlank": true
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "id": 2,
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0,
+          "metricName": "FreeableMemory",
+          "namespace": "AWS/RDS",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0,
+          "metricName": "SwapUsage",
+          "namespace": "AWS/RDS",
+          "period": "$period",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "Average"
+        }
+      ],
+      "title": "RDS Memory — Freeable / Swap (lower freeable = pressure)",
+      "type": "timeseries",
+      "links": [
+        {
+          "title": "이 차트에 대해 Bedrock AI에게 질문",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=RDS 인스턴스 ${db_id}의 가용 메모리(FreeableMemory)와 스왑 사용량(SwapUsage) 추이를 분석해 주세요. CloudWatch 메트릭: namespace=AWS/RDS, DBInstanceIdentifier=${db_id}. 메모리가 부족해지고 있나요? 인스턴스 크기를 키워야 할 정도인가요?",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "mappings": []
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 9
+      },
+      "id": 3,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0,
+          "metricName": "CPUUtilization",
+          "namespace": "AWS/RDS",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Average"
+        }
+      ],
+      "title": "CPU (current)",
+      "type": "stat",
+      "links": [
+        {
+          "title": "이 차트에 대해 Bedrock AI에게 질문",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=RDS 인스턴스 ${db_id}의 현재 CPU 사용률은 얼마인가요? CloudWatch 메트릭: namespace=AWS/RDS, MetricName=CPUUtilization, DBInstanceIdentifier=${db_id}. 이 수준이 우려스러운가요?",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 268435456
+              },
+              {
+                "color": "green",
+                "value": 536870912
+              }
+            ]
+          },
+          "unit": "bytes",
+          "min": 0,
+          "mappings": []
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 9
+      },
+      "id": 4,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0,
+          "metricName": "FreeableMemory",
+          "namespace": "AWS/RDS",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Average"
+        }
+      ],
+      "title": "Freeable Memory (current)",
+      "type": "stat",
+      "links": [
+        {
+          "title": "이 차트에 대해 Bedrock AI에게 질문",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=RDS 인스턴스 ${db_id}의 현재 가용 메모리(FreeableMemory)는 얼마인가요? CloudWatch 메트릭: namespace=AWS/RDS, MetricName=FreeableMemory, DBInstanceIdentifier=${db_id}. 메모리가 임계 수준에 가까워지고 있나요?",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
+          },
+          "unit": "short",
+          "min": 0,
+          "mappings": []
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 9
+      },
+      "id": 5,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "expression": "",
+          "id": "",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0,
+          "metricName": "DatabaseConnections",
+          "namespace": "AWS/RDS",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Average"
+        }
+      ],
+      "title": "DB Connections (current)",
+      "type": "stat",
+      "links": [
+        {
+          "title": "이 차트에 대해 Bedrock AI에게 질문",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=RDS 인스턴스 ${db_id}의 현재 DB 연결 수는 얼마인가요? CloudWatch 메트릭: namespace=AWS/RDS, MetricName=DatabaseConnections, DBInstanceIdentifier=${db_id}. 연결 수가 비정상적으로 높거나 낮나요?",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "mappings": []
+        }
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 9
+      },
+      "id": 6,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "alias": "Storage Used %",
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "expression": "100 - (m1 / m2 * 100)",
+          "id": "storageUsedPct",
+          "matchExact": true,
+          "metricEditorMode": 1,
+          "metricQueryType": 0,
+          "namespace": "AWS/RDS",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "C",
+          "region": "default",
+          "hide": false
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "expression": "",
+          "id": "m1",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0,
+          "metricName": "FreeStorageSpace",
+          "namespace": "AWS/RDS",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "default",
+          "statistic": "Average",
+          "hide": true
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "expression": "",
+          "id": "m2",
+          "matchExact": true,
+          "metricEditorMode": 0,
+          "metricQueryType": 0,
+          "metricName": "TotalStorageSpace",
+          "namespace": "AWS/RDS",
+          "period": "300",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "default",
+          "statistic": "Average",
+          "hide": true
+        }
+      ],
+      "title": "Storage Used %",
+      "type": "stat",
+      "links": [
+        {
+          "title": "이 차트에 대해 Bedrock AI에게 질문",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=RDS 인스턴스 ${db_id}의 스토리지 사용률을 분석해 주세요. CloudWatch 메트릭: namespace=AWS/RDS, FreeStorageSpace 및 TotalStorageSpace, DBInstanceIdentifier=${db_id}. 스토리지가 부족해지고 있나요?",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 101,
+      "title": "RDS — Logs",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "links": [
+            {
+              "title": "Bedrock AI에게 RDS 에러 분석 요청",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=RDS 인스턴스 ${db_id}의 에러 로그에서 다음 메시지가 발견되었습니다. CloudWatch Logs 그룹: /aws/rds/instance/${db_id}/error. 이 에러의 원인은 무엇이며 어떻게 해결해야 하나요?",
+              "targetBlank": true
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 7,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "queryMode": "Logs",
+          "logGroupNames": [
+            "/aws/rds/instance/$db_id/error"
+          ],
+          "logGroups": [
+            {
+              "name": "/aws/rds/instance/$db_id/error"
+            }
+          ],
+          "expression": "fields @timestamp, @message | sort @timestamp desc | limit 200",
+          "region": "default",
+          "refId": "A",
+          "statsGroups": []
+        }
+      ],
+      "title": "RDS Error Log — /aws/rds/instance/$db_id/error",
+      "type": "table",
+      "links": [
+        {
+          "title": "이 로그 패널에 대해 Bedrock AI에게 질문",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=RDS 인스턴스 ${db_id}의 최근 에러 로그를 분석해 주세요. CloudWatch Logs 그룹: /aws/rds/instance/${db_id}/error. 자주 등장하는 에러 패턴이 있나요? 즉시 조치가 필요한 항목이 있나요?",
+          "targetBlank": true
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch-main"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "links": [
+            {
+              "title": "Bedrock AI에게 슬로우 쿼리 분석 요청",
+              "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=RDS 인스턴스 ${db_id}의 슬로우 쿼리 로그에서 다음 항목이 발견되었습니다. CloudWatch Logs 그룹: /aws/rds/instance/${db_id}/slowquery. 이 쿼리는 왜 느린가요? 인덱스 추가나 쿼리 재작성으로 어떻게 개선할 수 있나요?",
+              "targetBlank": true
+            }
+          ]
+        }
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 8,
+      "options": {
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch-main"
+          },
+          "queryMode": "Logs",
+          "logGroupNames": [
+            "/aws/rds/instance/$db_id/slowquery"
+          ],
+          "logGroups": [
+            {
+              "name": "/aws/rds/instance/$db_id/slowquery"
+            }
+          ],
+          "expression": "fields @timestamp, @message | sort @timestamp desc | limit 200",
+          "region": "default",
+          "refId": "A",
+          "statsGroups": []
+        }
+      ],
+      "title": "RDS Slow Query Log — /aws/rds/instance/$db_id/slowquery",
+      "type": "table",
+      "links": [
+        {
+          "title": "이 로그 패널에 대해 Bedrock AI에게 질문",
+          "url": "https://__GRAFANA_HOST__/d/bedrock-qa/bedrock-qanda?orgId=1&from=${__from}&to=${__to}&timezone=browser&var-q=RDS 인스턴스 ${db_id}의 최근 슬로우 쿼리들을 분석해 주세요. CloudWatch Logs 그룹: /aws/rds/instance/${db_id}/slowquery. 가장 느린 쿼리는 무엇이며 어떻게 최적화할 수 있나요? 인덱스 또는 스키마 변경 추천을 알려주세요.",
+          "targetBlank": true
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "tags": [
+    "aws",
+    "cloudwatch",
+    "rds"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "datasource": {
+          "type": "cloudwatch",
+          "uid": "cloudwatch-main"
+        },
+        "definition": "dimension_values(default,AWS/RDS,CPUUtilization,DBInstanceIdentifier)",
+        "hide": 0,
+        "includeAll": false,
+        "name": "db_id",
+        "options": [],
+        "query": "dimension_values(default,AWS/RDS,CPUUtilization,DBInstanceIdentifier)",
+        "refresh": 2,
+        "type": "query",
+        "label": "DB Instance"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "300",
+          "value": "300"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "name": "period",
+        "options": [
+          {
+            "selected": false,
+            "text": "1m",
+            "value": "60"
+          },
+          {
+            "selected": true,
+            "text": "5m",
+            "value": "300"
+          },
+          {
+            "selected": false,
+            "text": "15m",
+            "value": "900"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "3600"
+          }
+        ],
+        "query": "60,300,900,3600",
+        "type": "custom",
+        "label": "Period"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "AWS CloudWatch — RDS",
+  "uid": "aws-cloudwatch-rds",
+  "version": 1
+}
